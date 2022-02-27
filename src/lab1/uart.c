@@ -17,7 +17,7 @@ void uart_init() {
     *AUX_MU_CNTL = 3;
 }
 
-unsigned int uart_read() {
+uint uart_read() {
     while (!(*AUX_MU_LSR & 0x01)) {
         asm volatile("nop");
     }
@@ -34,7 +34,7 @@ char uart_getc() {
     return unlikely(c == '\r') ? '\n' : c;
 }
 
-void uart_send(unsigned int data) {
+void uart_send(uint data) {
     // Transmitter idle
     while (!(*AUX_MU_LSR & 0x20)) {
         asm volatile("nop");
@@ -45,7 +45,7 @@ void uart_send(unsigned int data) {
 void uart_puts(char* data) {
     while (*data) {
         if (unlikely(*data == '\n')) {
-            uart_send(*data);
+            uart_send('\r');
         }
         uart_send(*data++);
     }
