@@ -16,7 +16,7 @@ char cmd[CMD_MAX_LEN];
 
 void get_command() {
     char c;
-    uint idx = 0, len = 0;
+    size_t idx = 0, len = 0;
     while (1) {
         c = uart_getc();
         // https://www.microchip.com/forums/m979711.aspx

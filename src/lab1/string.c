@@ -10,7 +10,7 @@ int strcmp(const char* s1, const char* s2) {
     return (*p1 > *p2) - (*p2 > *p1);
 }
 
-int strncmp(const char* s1, const char* s2, int len) {
+int strncmp(const char* s1, const char* s2, size_t len) {
     const uchar* p1 = (const uchar*)s1;
     const uchar* p2 = (const uchar*)s2;
     while (len--) {
@@ -55,12 +55,12 @@ void trim(char* str) {
     str[i - begin] = '\0';  // Null terminate string.
 }
 
-void memset(char* s, char value, uint size) {
+void memset(char* s, char value, size_t size) {
     while (size--)
         *s++ = value;
 }
 
-void strins(char* s, char c, int pos) {
+void strins(char* s, char c, size_t pos) {
     uint len = strlen(s);
     for (uint i = len; i > pos; i--) {
         s[i] = s[i - 1];
@@ -68,7 +68,7 @@ void strins(char* s, char c, int pos) {
     s[pos] = c;
 }
 
-void strdel(char* s, int pos) {
+void strdel(char* s, size_t pos) {
     uint len = strlen(s) - 1;
     for (uint i = pos; i < len; i++) {
         s[i] = s[i + 1];

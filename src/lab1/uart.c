@@ -56,11 +56,18 @@ void uart_puts(char* data) {
 void uart_puti(int in) {
     char s[INT_STR_LEN] = {0};
     uchar i = INT_STR_LEN;
+    byte is_negative = ((uint)in) & 0x80000000 ? 1 : 0;
+    if (is_negative) {
+        in *= -1;
+    }
     while (in) {
         s[i--] = in % 10;
         in /= 10;
     }
     i = i + 1;
+    if (is_negative) {
+        uart_send('-');
+    }
     while (i <= INT_STR_LEN) {
         uart_send(0x30 + s[i++]);
     }
