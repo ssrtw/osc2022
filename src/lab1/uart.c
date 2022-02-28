@@ -3,6 +3,8 @@
 #include "compiler.h"
 #include "gpio.h"
 
+#define INT_STR_LEN 10
+
 void uart_init() {
     // enable mini UART
     *AUX_ENABLE |= 1;
@@ -48,5 +50,18 @@ void uart_puts(char* data) {
             uart_send('\r');
         }
         uart_send(*data++);
+    }
+}
+
+void uart_puti(int in) {
+    char s[INT_STR_LEN] = {0};
+    uchar i = INT_STR_LEN;
+    while (in) {
+        s[i--] = in % 10;
+        in /= 10;
+    }
+    i = i + 1;
+    while (i <= INT_STR_LEN) {
+        uart_send(0x30 + s[i++]);
     }
 }

@@ -2,7 +2,7 @@ ARMPREFIX = aarch64-elf
 LD = $(ARMPREFIX)-ld
 CC = $(ARMPREFIX)-gcc
 OC = $(ARMPREFIX)-objcopy
-CFLAGS = -Wall -O2 -ffreestanding -nostdinc -nostdlib -nostartfiles
+CFLAGS = -Wall -O2 -ffreestanding -nostdinc -nostdlib -nostartfiles -fno-stack-protector
 
 QEMU = qemu-system-aarch64
 QEMUARGS = -M raspi3 -kernel kernel8.img -display none -serial null -serial stdio

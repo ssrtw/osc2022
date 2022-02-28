@@ -16,4 +16,5 @@
 #define AUX_MU_CNTL     ((volatile uint*)(MMIO_BASE+0x00215060))
 #define AUX_MU_STAT     ((volatile uint*)(MMIO_BASE+0x00215064))
 #define AUX_MU_BAUD     ((volatile uint*)(MMIO_BASE+0x00215068))
+
 #endif

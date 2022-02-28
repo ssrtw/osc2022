@@ -39,6 +39,8 @@ void trim(char* str) {
     int i;
     int begin = 0;
     uint end = strlen(str) - 1;
+    if (end == -1)
+        return;
 
     while (isspace((uchar)str[begin]))
         begin++;
@@ -53,7 +55,23 @@ void trim(char* str) {
     str[i - begin] = '\0';  // Null terminate string.
 }
 
-void memset(char* s, char value, uint len) {
-    while (len--)
-        *s = value;
+void memset(char* s, char value, uint size) {
+    while (size--)
+        *s++ = value;
+}
+
+void strins(char* s, char c, int pos) {
+    uint len = strlen(s);
+    for (uint i = len; i > pos; i--) {
+        s[i] = s[i - 1];
+    }
+    s[pos] = c;
+}
+
+void strdel(char* s, int pos) {
+    uint len = strlen(s) - 1;
+    for (uint i = pos; i < len; i++) {
+        s[i] = s[i + 1];
+    }
+    s[len] = 0;
 }
