@@ -2,6 +2,7 @@
 
 #include "compiler.h"
 #include "gpio.h"
+#include "stdarg.h"
 
 #define INT_STR_LEN 10
 
@@ -71,4 +72,32 @@ void uart_puti(int in) {
     while (i <= INT_STR_LEN) {
         uart_send(0x30 + s[i++]);
     }
+}
+
+// https://stackoverflow.com/a/54352534/13177700
+void uart_printf(char* format, ...) {
+    va_list l;
+    va_start(l, format);
+    char *ptr, *s;
+    int i;
+    for (ptr = format; *ptr != '\0'; ptr++) {
+        if (*ptr == '%') {
+            ++ptr;
+            switch (*ptr) {
+                case 'd':
+                    i = va_arg(l, int);
+                    uart_puti(i);
+                    break;
+                case 's':
+                    s = va_arg(l, char*);
+                    uart_puts(s);
+                    break;
+                case '%':
+                    uart_send('%');
+            }
+        } else {
+            uart_send(*ptr);
+        }
+    }
+    va_end(l);
 }

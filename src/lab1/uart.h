@@ -8,5 +8,6 @@ char uart_getc();
 void uart_send(uint data);
 void uart_puts(char* data);
 void uart_puti(int in);
+void uart_printf(char* format, ...);
 
 #endif

@@ -76,21 +76,15 @@ void parse_command() {
     } else if (!strncmp(cmd, "hello", 5)) {
         uart_puts("Hello World!\n");
     } else {
-        uart_puts(cmd);
-        uart_puts(": command not found\n");
+        uart_printf("%s: command not found\n", cmd);
     }
 }
 
 void flush_line(int cursor) {
-    // clear line
-    uart_puts("\x1b[2K\r");
-    // restore command
-    uart_puts(CMD_PREFIX);
-    uart_puts(cmd);
+    // clear line & restore command
+    uart_printf("%s%s", ESCAPE_STR "2k\r" CMD_PREFIX, cmd);
     // set cursor position with CMD_PREFIX offset
-    uart_puts("\x1b[");
-    uart_puti(cursor + CMD_PREFIX_LEN + CURSOR_OFFSET);
-    uart_send('G');
+    uart_printf("%s%dG", ESCAPE_STR, cursor + CMD_PREFIX_LEN + CURSOR_OFFSET);
 }
 
 void shell() {
