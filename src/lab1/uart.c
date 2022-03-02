@@ -1,12 +1,13 @@
 #include "uart.h"
 
 #include "compiler.h"
-#include "gpio.h"
 #include "stdarg.h"
 
-#define INT_STR_LEN 10
+#define INT_STR_LEN  10
+#define UINT_HEX_LEN 8
 
 void uart_init() {
+    register uint r;
     // enable mini UART
     *AUX_ENABLE |= 1;
     // start setting, disable TX/RX
@@ -16,32 +17,40 @@ void uart_init() {
     *AUX_MU_CNTL = 0;
     *AUX_MU_BAUD = 270;
     *AUX_MU_IIR = 6;
+
+    // need set GPIO 14-15 as ALT Func 5
+    r = *GPFSEL1;
+    r &= ~((7 << 12) | (7 << 15));
+    r |= (2 << 12) | (2 << 15);
+    *GPFSEL1 = r;  // set alt5
+    *GPPUD = 0;
+    r = 150;
+    WAITING(r--);
+    *GPPUDCLK0 = (1 << 14) | (1 << 15);  // GPPUDCLK0 is 0..31 clock
+    r = 150;
+    WAITING(r--);
+    *GPPUDCLK0 = 0;  // NO EFFECT
+
     // setup finish, enable TX/RX
     *AUX_MU_CNTL = 3;
 }
 
 uint uart_read() {
-    while (!(*AUX_MU_LSR & 0x01)) {
-        asm volatile("nop");
-    }
+    WAITING(!(*AUX_MU_LSR & 0x01));
     return *AUX_MU_IO;
 }
 
 char uart_getc() {
     char c;
     // Data ready
-    while (!(*AUX_MU_LSR & 0x01)) {
-        asm volatile("nop");
-    }
+    WAITING(!(*AUX_MU_LSR & 0x01));
     c = (char)(*AUX_MU_IO);
     return unlikely(c == '\r') ? '\n' : c;
 }
 
 void uart_send(uint data) {
     // Transmitter idle
-    while (!(*AUX_MU_LSR & 0x20)) {
-        asm volatile("nop");
-    }
+    WAITING(!(*AUX_MU_LSR & 0x20));
     *AUX_MU_IO = data;
 }
 
@@ -56,7 +65,7 @@ void uart_puts(char* data) {
 
 void uart_puti(int in) {
     char s[INT_STR_LEN] = {0};
-    uchar i = INT_STR_LEN;
+    uchar i = INT_STR_LEN - 1;
     byte is_negative = ((uint)in) & 0x80000000 ? 1 : 0;
     if (is_negative) {
         in *= -1;
@@ -69,8 +78,27 @@ void uart_puti(int in) {
     if (is_negative) {
         uart_send('-');
     }
-    while (i <= INT_STR_LEN) {
+    while (i < INT_STR_LEN) {
         uart_send(0x30 + s[i++]);
+    }
+}
+
+void uart_putx(uint in) {
+    char s[UINT_HEX_LEN] = {0};
+    uchar i = UINT_HEX_LEN - 1;
+    while (in) {
+        s[i--] = in % 16;
+        in /= 16;
+    }
+    i = 0;
+    uart_puts("0x");
+    while (i < UINT_HEX_LEN) {
+        if (s[i] >= 10) {
+            uart_send(0x37 + s[i]);
+        } else {
+            uart_send(0x30 + s[i]);
+        }
+        ++i;
     }
 }
 
@@ -88,6 +116,10 @@ void uart_printf(char* format, ...) {
                     i = va_arg(l, int);
                     uart_puti(i);
                     break;
+                case 'x':
+                    i = va_arg(l, int);
+                    uart_putx((uint)i);
+                    break;
                 case 's':
                     s = va_arg(l, char*);
                     uart_puts(s);
@@ -96,6 +128,7 @@ void uart_printf(char* format, ...) {
                     uart_send('%');
             }
         } else {
+            if (*ptr == '\n') uart_send('\r');
             uart_send(*ptr);
         }
     }

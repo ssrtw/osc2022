@@ -2,4 +2,5 @@
 *.img
 *.elf
 .fuse_hidden*
-.vscode
+.vscode/**
+!.vscode/settings.json

@@ -1,6 +1,8 @@
-#include "compiler.h"
 #ifndef _STRING_H
 #define _STRING_H
+
+#include "compiler.h"
+#include "stddef.h"
 
 #define ESCAPE_STR "\x1b["
 
