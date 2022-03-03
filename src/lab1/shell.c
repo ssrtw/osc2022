@@ -24,49 +24,81 @@ void get_command() {
     while (1) {
         c = uart_getc();
         // https://www.microchip.com/forums/m979711.aspx
-        // check backspace
+        // backspace
         if (unlikely(c == 0x08 || c == 0x7f)) {
-            if (idx == 0) continue;  // check if no any char, make index don't out of bound
+            if (idx == 0) continue;  // check if cursor at first position, don't react
             strdel(cmd, --idx);      //當前的前一個要砍掉
-            flush_line(idx);
             --len;
         }
         // escape
         else if (unlikely(c == 0x1b)) {
-            c = uart_getc();  // get '['
-            if (c != '[') continue;
+            if (uart_getc() != '[') continue;
             c = uart_getc();
-            if (c == 0x41) {
-                // no implementation
-            } else if (c == 0x42) {
-                // no implementation
-            } else {
-                // arrow right
-                if (c == 0x43 && idx < len) {
-                    ++idx;
-                    uart_puts("\x1b[");
-                    uart_send(c);
-                }
-                // arrow left
-                else if (c == 0x44 && idx > 0) {
-                    --idx;
-                    uart_puts("\x1b[");
-                    uart_send(c);
-                }
+            switch (c) {
+                case 0x33:
+                    // delete
+                    // check if cursor at last position, don't react
+                    if (uart_getc() == '~' && idx != len) {
+                        strdel(cmd, idx);
+                        --len;
+                    }
+                    break;
+                case 0x41:
+                    // no implementation
+                    break;
+                case 0x42:
+                    // no implementation
+                    break;
+                case 0x43:
+                    // arrow right
+                    if (idx < len) {
+                        ++idx;
+                        uart_puts(ESCAPE_STR);
+                        uart_send(c);
+                    }
+                    break;
+                case 0x44:
+                    // arrow left
+                    if (idx > 0) {
+                        --idx;
+                        uart_puts(ESCAPE_STR);
+                        uart_send(c);
+                    }
+                    break;
+                case 0x46:  // end
+                    idx = len;
+                    break;
+                case 0x48:  // home
+                    idx = 0;
+                    break;
             }
+        }
+        // goto head
+        else if (unlikely(c == 0x1)) {
+            idx = 0;
+        }
+        // goto tail
+        else if (unlikely(c == 0x5)) {
+            idx = len;
+        }
+        // delete to end (ctrl+k)
+        else if (unlikely(c == 0xb)) {
+            for (int i = idx; i < len; i++)
+                cmd[i] = '\0';
+            len = idx;
         }
         // check end of line
         else if (unlikely(c == '\n')) {
             cmd[len] = 0;
             uart_puts("\r\n");
-            break;
+            return;
         }
         // if len<CMD_MAX_LEN can insert new char
         else if (len < CMD_MAX_LEN) {
             strins(cmd, c, idx++);
-            flush_line(idx);
             ++len;
         }
+        flush_line(idx);
     }
 }
 

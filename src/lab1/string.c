@@ -29,7 +29,7 @@ uint strlen(const char* s) {
 }
 
 uint isspace(char c) {
-    if (unlikely(c == ' ' || c == '\t'))
+    if (unlikely(c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v'))
         return 1;
     return 0;
 }
