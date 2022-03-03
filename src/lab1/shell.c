@@ -2,6 +2,7 @@
 
 #include "compiler.h"
 #include "mbox.h"
+#include "reboot.h"
 #include "stddef.h"
 #include "string.h"
 #include "uart.h"
@@ -78,11 +79,14 @@ void parse_command() {
             "help\t: print this help menu\n"
             "hello\t: print Hello World!\n"
             "sysinfo\t: show board info\n"
+            "reboot\t: reboot rpi\n"
             "clear\t: clear screen\n");
     } else if (!strncmp(cmd, "hello", 5)) {
         uart_puts("Hello World!\n");
     } else if (!strncmp(cmd, "sysinfo", 7)) {
         print_sysinfo();
+    } else if (!strncmp(cmd, "reboot", 6)) {
+        reboot(0);
     } else if (!strncmp(cmd, "clear", 5)) {
         uart_puts(ESCAPE_STR "2J\x1b[H");
     } else {
