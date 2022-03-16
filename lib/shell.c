@@ -118,7 +118,7 @@ void parse_command() {
     } else if (!strncmp(cmd, "sysinfo", 7)) {
         print_sysinfo();
     } else if (!strncmp(cmd, "reboot", 6)) {
-        reboot(0);
+        reboot(1);
     } else if (!strncmp(cmd, "clear", 5)) {
         uart_puts(ESCAPE_STR "2J\x1b[H");
     } else {

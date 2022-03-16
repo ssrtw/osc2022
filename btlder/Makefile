@@ -1,20 +1,20 @@
 include ../var.mak
 
-SRC = kernel
+SRC = btlder
 IMAGE_NAME = kernel8
-QEMU_SERIAL = -serial null -serial pty #stdio
+QEMU_SERIAL = -serial null -serial pty
 
 SRCC = $(wildcard $(SRC_DIR)/*.c)
 SRCS = $(wildcard $(SRC_DIR)/*.s)
-LIBC = $(wildcard $(LIB_DIR)/*.c)
-LIBS = $(wildcard $(LIB_DIR)/*.s)
+LIBC = uart.c
+LIBC:= $(LIBC:%.c=$(LIB_DIR)/%.c)
 
 OBJS = $(SRCC:$(SRC_DIR)/%.c=$(BUILD_DIR)/$(SRC)_%_c.o) \
        $(SRCS:$(SRC_DIR)/%.s=$(BUILD_DIR)/$(SRC)_%_s.o) \
        $(LIBC:$(LIB_DIR)/%.c=$(BUILD_DIR)/$(LIB)_%_c.o) \
-       $(LIBS:$(LIB_DIR)/%.s=$(BUILD_DIR)/$(LIB)_%_s.o)
 
-all: $(SRC_DIR)/$(IMAGE_NAME).img
+
+all: $(SRC_DIR)/$(IMAGE_NAME).img 
 
 $(BUILD_DIR)/$(LIB)_%_s.o: $(LIB_DIR)/%.s
 	$(CC) $(CFLAGS) -I $(LIB_DIR) -c $< -o $@

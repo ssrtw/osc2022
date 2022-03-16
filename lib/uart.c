@@ -33,6 +33,8 @@ void uart_init() {
 
     // setup finish, enable TX/RX
     *AUX_MU_CNTL = 3;
+
+    WAITING(!(*AUX_MU_LSR & 0x01));  // clean rx noise
 }
 
 uint uart_read() {
@@ -64,22 +66,15 @@ void uart_puts(char* data) {
 }
 
 void uart_puti(int in) {
-    char s[INT_STR_LEN] = {0};
-    uchar i = INT_STR_LEN - 1;
-    byte is_negative = ((uint)in) & 0x80000000 ? 1 : 0;
-    if (is_negative) {
-        in *= -1;
-    }
-    while (in) {
-        s[i--] = in % 10;
+    char s[11] = {0};
+    int i = 0;
+    for (i = 0; i < 11; i++) {
+        s[i] = in % 10;
         in /= 10;
+        if (in == 0) break;
     }
-    i = i + 1;
-    if (is_negative) {
-        uart_send('-');
-    }
-    while (i < INT_STR_LEN) {
-        uart_send(0x30 + s[i++]);
+    for (; i >= 0; i--) {
+        uart_send(s[i] + '0');
     }
 }
 
