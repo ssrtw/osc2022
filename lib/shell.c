@@ -1,6 +1,8 @@
 #include "shell.h"
 
 #include "compiler.h"
+#include "cpio.h"
+#include "malloc.h"
 #include "mbox.h"
 #include "reboot.h"
 #include "stddef.h"
@@ -12,13 +14,13 @@
 #define CURSOR_OFFSET  1
 #define CMD_MAX_LEN    256
 
-void get_command();
+size_t get_command();
 void parse_command();
 void flush_line(size_t cursor);
 void print_sysinfo();
 char cmd[CMD_MAX_LEN];
 
-void get_command() {
+size_t get_command() {
     char c;
     size_t idx = 0, len = 0;
     while (1) {
@@ -35,6 +37,10 @@ void get_command() {
             if (uart_getc() != '[') continue;
             c = uart_getc();
             switch (c) {
+                case 0x31:  // goto head
+                    if (uart_read() == 0x7e)
+                        idx = 0;
+                    break;
                 case 0x33:
                     // delete
                     // check if cursor at last position, don't react
@@ -42,6 +48,10 @@ void get_command() {
                         strdel(cmd, idx);
                         --len;
                     }
+                    break;
+                case 0x34:  // goto tail
+                    if (uart_read() == 0x7e)
+                        idx = len;
                     break;
                 case 0x41:
                     // no implementation
@@ -91,7 +101,7 @@ void get_command() {
         else if (unlikely(c == '\n')) {
             cmd[len] = 0;
             uart_puts("\r\n");
-            return;
+            return len;
         }
         // if len<CMD_MAX_LEN can insert new char
         else if (len < CMD_MAX_LEN) {
@@ -100,6 +110,7 @@ void get_command() {
         }
         flush_line(idx);
     }
+    return len;
 }
 
 void parse_command() {
@@ -111,10 +122,21 @@ void parse_command() {
             "help\t: print this help menu\n"
             "hello\t: print Hello World!\n"
             "sysinfo\t: show board info\n"
+            "ls\t: list cpio root files\n"
+            "cat\t: read cpio file content\n"
             "reboot\t: reboot rpi\n"
             "clear\t: clear screen\n");
     } else if (!strncmp(cmd, "hello", 5)) {
         uart_puts("Hello World!\n");
+    } else if (!strncmp(cmd, "ls", 2)) {
+        cpio_ls();
+    } else if (!strncmp(cmd, "cat", 3)) {
+        // clear cmd
+        memset(cmd, 0, CMD_MAX_LEN);
+        uart_puts(CMD_PREFIX);
+        // again, read file name
+        size_t len = get_command();
+        cpio_get_file(cmd, &len);
     } else if (!strncmp(cmd, "sysinfo", 7)) {
         print_sysinfo();
     } else if (!strncmp(cmd, "reboot", 6)) {
@@ -135,7 +157,7 @@ void flush_line(size_t cursor) {
 
 // show board info
 void print_sysinfo() {
-    uint revision = 0, addr = 0, memsize = 0;
+    uint32_t revision = 0, addr = 0, memsize = 0;
     // mbox read data
     get_board_revision(&revision);
     get_arm_memory(&addr, &memsize);
@@ -147,8 +169,10 @@ void print_sysinfo() {
 void shell() {
     // clear screen
     uart_puts(ESCAPE_STR "2J\x1b[H");
+    char* welcome_msg = malloc_size(23);
+    strncpy(welcome_msg, "Welcome to ssrtw shell", 23);
     // send welcome message
-    uart_puts("Welcome to ssrtw shell\n");
+    uart_printf("%s\nMessage heap address: %x\n", welcome_msg, welcome_msg);
     print_sysinfo();
     while (1) {
         uart_puts(CMD_PREFIX);

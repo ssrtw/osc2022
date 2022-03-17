@@ -5,10 +5,10 @@
 #define PROTOCOL_HEADER_LEN sizeof protocol_header - 1
 byte protocol_header[] = "c8763";
 
-void c8763_reader() {
-    long long address = 0x80000;
+void c8763_reader(void *__dtb) {
+    size_t address = 0x80000;
     int img_size = 0, i;
-    byte *kernel = (byte *)address;
+    byte *kernel = (void *)address;
     byte data;
     while (1) {
         // 讀取header
@@ -33,7 +33,7 @@ void c8763_reader() {
             *(kernel + i) = b;
             uart_send(b);
         }
-        void (*run_kernel)(void) = (void *)kernel;
-        run_kernel();
+        void (*run_kernel)(void *) = (void *)kernel;
+        run_kernel(__dtb);
     }
 }

@@ -3,7 +3,7 @@
 
 #include "stddef.h"
 
-void reboot(uint tick);
+void reboot(uint32_t tick);
 void cancel_reboot();
 
 #endif

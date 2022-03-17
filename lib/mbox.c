@@ -5,9 +5,9 @@
 #include "uart.h"
 
 #define MBOX_BASE   MMIO_BASE + 0xb880
-#define MBOX_READ   ((volatile uint *)(MBOX_BASE + 0x00000000))
-#define MBOX_STATUS ((volatile uint *)(MBOX_BASE + 0x00000018))
-#define MBOX_WRITE  ((volatile uint *)(MBOX_BASE + 0x00000020))
+#define MBOX_READ   ((volatile uint32_t *)(MBOX_BASE + 0x00000000))
+#define MBOX_STATUS ((volatile uint32_t *)(MBOX_BASE + 0x00000018))
+#define MBOX_WRITE  ((volatile uint32_t *)(MBOX_BASE + 0x00000020))
 
 // magic number
 #define REQUEST_CODE     0x00000000
@@ -26,10 +26,10 @@
 #define VC2ARM 9
 
 // need alignment
-volatile uint mbox[64] __attribute__((aligned(16)));
+volatile uint32_t mbox[64] __attribute__((aligned(16)));
 
 int mbox_call(byte ch) {
-    uint r = (((uint)((ulong)mbox) & ~0xF) | (ch & 0xF));
+    uint32_t r = (((uint32_t)((uint64_t)mbox) & ~0xF) | (ch & 0xF));
     /* wait until we can write to the mailbox */
     WAITING(*MBOX_STATUS & MBOX_FULL);
     /* write the address of our message to the mailbox with channel identifier */
@@ -47,7 +47,7 @@ int mbox_call(byte ch) {
     return 0;
 }
 
-void get_board_revision(uint *res) {
+void get_board_revision(uint32_t *res) {
     mbox[0] = 7 * 4;         // buffer size in bytes
     mbox[1] = REQUEST_CODE;  // magic number(0)
     // tags begin
@@ -63,7 +63,7 @@ void get_board_revision(uint *res) {
     *res = mbox[5];
 }
 
-void get_arm_memory(uint *addr, uint *size) {
+void get_arm_memory(uint32_t *addr, uint32_t *size) {
     mbox[0] = 8 * 4;         // buffer size in bytes
     mbox[1] = REQUEST_CODE;  // magic number(0)
     // tags begin

@@ -21,14 +21,21 @@ int strncmp(const char* s1, const char* s2, size_t len) {
     return 0;
 }
 
-uint strlen(const char* s) {
-    uint len = 0;
+int strncpy(char* dst, const char* src, size_t len) {
+    int i;
+    for (i = 0; i < len; i++)
+        dst[i] = src[i];
+    return i;
+}
+
+uint32_t strlen(const char* s) {
+    uint32_t len = 0;
     while (*s++)
         ++len;
     return len;
 }
 
-uint isspace(char c) {
+uint32_t isspace(char c) {
     if (unlikely(c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v'))
         return 1;
     return 0;
@@ -38,7 +45,7 @@ uint isspace(char c) {
 void trim(char* str) {
     int i;
     int begin = 0;
-    uint end = strlen(str) - 1;
+    uint32_t end = strlen(str) - 1;
     if (end == -1)
         return;
 
@@ -61,16 +68,16 @@ void memset(char* s, char value, size_t size) {
 }
 
 void strins(char* s, char c, size_t pos) {
-    uint len = strlen(s);
-    for (uint i = len; i > pos; i--) {
+    uint32_t len = strlen(s);
+    for (uint32_t i = len; i > pos; i--) {
         s[i] = s[i - 1];
     }
     s[pos] = c;
 }
 
 void strdel(char* s, size_t pos) {
-    uint len = strlen(s) - 1;
-    for (uint i = pos; i < len; i++) {
+    uint32_t len = strlen(s) - 1;
+    for (uint32_t i = pos; i < len; i++) {
         s[i] = s[i + 1];
     }
     s[len] = 0;

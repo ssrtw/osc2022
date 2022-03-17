@@ -7,7 +7,7 @@
 #define UINT_HEX_LEN 8
 
 void uart_init() {
-    register uint r;
+    register uint32_t r;
     // enable mini UART
     *AUX_ENABLE |= 1;
     // start setting, disable TX/RX
@@ -37,7 +37,7 @@ void uart_init() {
     WAITING(!(*AUX_MU_LSR & 0x01));  // clean rx noise
 }
 
-uint uart_read() {
+uint32_t uart_read() {
     WAITING(!(*AUX_MU_LSR & 0x01));
     return *AUX_MU_IO;
 }
@@ -50,7 +50,7 @@ char uart_getc() {
     return unlikely(c == '\r') ? '\n' : c;
 }
 
-void uart_send(uint data) {
+void uart_send(uint32_t data) {
     // Transmitter idle
     WAITING(!(*AUX_MU_LSR & 0x20));
     *AUX_MU_IO = data;
@@ -78,7 +78,7 @@ void uart_puti(int in) {
     }
 }
 
-void uart_putx(uint in) {
+void uart_putx(uint32_t in) {
     char s[UINT_HEX_LEN] = {0};
     uchar i = UINT_HEX_LEN - 1;
     while (in) {
@@ -113,7 +113,7 @@ void uart_printf(char* format, ...) {
                     break;
                 case 'x':
                     i = va_arg(l, int);
-                    uart_putx((uint)i);
+                    uart_putx((uint32_t)i);
                     break;
                 case 's':
                     s = va_arg(l, char*);

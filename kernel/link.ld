@@ -12,5 +12,7 @@ SECTIONS{
         *(.bss.*)
     }
     __bss_end = .;
+    . = ALIGN(4096); /* 4K align */
+    __heap_start = .;
 }
 __bss_size = (__bss_end - __bss_start)>>3;

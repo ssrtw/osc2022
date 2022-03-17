@@ -1,7 +1,7 @@
 include ../var.mak
 
 SRC = btlder
-IMAGE_NAME = kernel8
+IMAGE_NAME = bootloader
 QEMU_SERIAL = -serial null -serial pty
 
 SRCC = $(wildcard $(SRC_DIR)/*.c)

@@ -3,7 +3,7 @@
 
 #include "stddef.h"
 
-void get_board_revision(uint *res);
-void get_arm_memory(uint *addr, uint *size);
+void get_board_revision(uint32_t *res);
+void get_arm_memory(uint32_t *addr, uint32_t *size);
 
 #endif

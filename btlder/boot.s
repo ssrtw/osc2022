@@ -13,7 +13,7 @@ _start:
     cbnz    x1, _standby
 
     // stack pointer before MMIO address
-    mov     sp, #0x3f000000  // move sp before MMIO address
+    mov     sp, #0x60000  // move sp before MMIO address
 
     // relocate_btlder
     ldr     x2, =__btlder_start
@@ -45,7 +45,6 @@ _bss_set_zero:
 _bl_main:
     // goto main function
     blr     x6     // link because if occur exception, make cpu wfe(die).
-    //bl       main  // if bootloader main function return, goto _start again initialize.
 _standby:
     wfe
     b   _standby

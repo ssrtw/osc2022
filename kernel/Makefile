@@ -31,7 +31,7 @@ $(SRC_DIR)/$(IMAGE_NAME).img: $(OBJS)
 	$(OC) -O binary $(SRC_DIR)/$(IMAGE_NAME).elf $(SRC_DIR)/$(IMAGE_NAME).img
 
 run:
-	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial null -serial stdio
+	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial null -serial stdio -initrd ../initramfs.cpio -dtb ../bcm2710-rpi-3-b-plus.dtb
 
 runtty:
 	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial null -serial pty
