@@ -51,24 +51,29 @@ int cpio_parse_header(void *now, const char **filename, uint64_t *_filesize, voi
     return 0;
 }
 
-void *cpio_get_file(const char *name, uint64_t *size) {
+int cpio_traverse(const char *name, uint64_t *size, cpio_callback func) {
     struct cpio_header *header = cpio_ramfs;
-
-    while (1) {
+    uint32_t input_len, len;
+    input_len = strlen(name);
+    for (;;) {
         struct cpio_header *next;
         void *result;
         const char *current_filename;
 
         int error = cpio_parse_header(header, &current_filename, size, &result, &next);
         if (error)
-            return NULL;
-        uint32_t len = strlen(name);
-        if (strncmp(current_filename, name, len) == 0) {
-            uart_printf("%s\n", result);
-            break;
+            return -1;
+        len = strlen(current_filename);
+        if (input_len == len && strncmp(current_filename, name, len) == 0) {
+            func(current_filename, result);
+            return 0;
         }
         header = next;
     }
+}
+
+void cpio_catfile(void *filename, void *data) {
+    uart_puts(data);
 }
 
 void cpio_ls() {
@@ -76,7 +81,7 @@ void cpio_ls() {
     struct cpio_header *header, *next;
     void *result;
     int error;
-    uint64_t i, size;
+    uint64_t size;
 
     header = cpio_ramfs;
     while (1) {

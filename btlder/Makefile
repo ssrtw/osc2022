@@ -2,7 +2,7 @@ include ../var.mak
 
 SRC = btlder
 IMAGE_NAME = bootloader
-QEMU_SERIAL = -serial null -serial pty
+QEMU_SERIAL = -serial pty
 
 SRCC = $(wildcard $(SRC_DIR)/*.c)
 SRCS = $(wildcard $(SRC_DIR)/*.s)
@@ -31,10 +31,10 @@ $(SRC_DIR)/$(IMAGE_NAME).img: $(OBJS)
 	$(OC) -O binary $(SRC_DIR)/$(IMAGE_NAME).elf $(SRC_DIR)/$(IMAGE_NAME).img
 
 run:
-	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial null -serial stdio
+	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial stdio
 
 runtty:
-	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial null -serial pty
+	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial pty
 
 debug:
 	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -S -s -serial stdio

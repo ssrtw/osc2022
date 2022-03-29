@@ -34,7 +34,7 @@ void uart_init() {
     // setup finish, enable TX/RX
     *AUX_MU_CNTL = 3;
 
-    WAITING(!(*AUX_MU_LSR & 0x01));  // clean rx noise
+    // WAITING(!(*AUX_MU_LSR & 0x01));  // clean rx noise
 }
 
 uint32_t uart_read() {

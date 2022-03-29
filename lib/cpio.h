@@ -7,6 +7,8 @@
 #define CPIO_FOOTER_MAGIC "TRAILER!!!"
 #define CPIO_ALIGNMENT    4
 
+typedef void (*cpio_callback)(void *filename, void *data);
+
 void *cpio_ramfs;
 
 struct cpio_header {
@@ -33,8 +35,8 @@ struct cpio_info {
     uint32_t max_path_sz;
 };
 
-void *cpio_get_file(const char *name, uint64_t *size);
-
+int cpio_traverse(const char *name, uint64_t *size, cpio_callback func);
+void cpio_catfile(void *filename, void *data);
 void cpio_ls();
 
 #endif

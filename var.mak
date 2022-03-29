@@ -5,14 +5,14 @@ ARMPREFIX = aarch64-elf
 LD = $(ARMPREFIX)-ld
 CC = $(ARMPREFIX)-gcc
 OC = $(ARMPREFIX)-objcopy
-CFLAGS = -Wall -O2 -ffreestanding -nostdinc -nostdlib -nostartfiles -fno-stack-protector
+CFLAGS = -Wall -O2 -ffreestanding -nostdinc -nostdlib -nostartfiles -fno-stack-protector -g
 
 QEMU = qemu-system-aarch64
 # Arch Linux
-QEMUARGS = -M raspi3b -display none
+QEMUARGS = -M raspi3b -display none -serial null
 # Ubuntu
 ifeq ($(OS),Ubuntu)
-	QEMUARGS = -M raspi3 -display none
+	QEMUARGS = -M raspi3 -display none -serial null
 endif
 
 BUILD = build

@@ -2,6 +2,7 @@
 
 #include "compiler.h"
 #include "cpio.h"
+#include "exec.h"
 #include "malloc.h"
 #include "mbox.h"
 #include "reboot.h"
@@ -14,15 +15,17 @@
 #define CURSOR_OFFSET  1
 #define CMD_MAX_LEN    256
 
-size_t get_command();
+size_t get_line(char *line_prefix);
 void parse_command();
-void flush_line(size_t cursor);
+void flush_line(char *line_prefix, int prefix_len, size_t cursor);
 void print_sysinfo();
 char cmd[CMD_MAX_LEN];
 
-size_t get_command() {
+size_t get_line(char *line_prefix) {
+    uart_puts(line_prefix);
     char c;
     size_t idx = 0, len = 0;
+    int prefix_len = strlen(line_prefix);
     while (1) {
         c = uart_getc();
         // https://www.microchip.com/forums/m979711.aspx
@@ -108,7 +111,7 @@ size_t get_command() {
             strins(cmd, c, idx++);
             ++len;
         }
-        flush_line(idx);
+        flush_line(line_prefix, prefix_len, idx);
     }
     return len;
 }
@@ -117,42 +120,55 @@ void parse_command() {
     if (!strlen(cmd))
         return;
     trim(cmd);
-    if (!strncmp(cmd, "help", 4)) {
+    if (!strcmp(cmd, "help")) {
         uart_puts(
             "help\t: print this help menu\n"
             "hello\t: print Hello World!\n"
             "sysinfo\t: show board info\n"
             "ls\t: list cpio root files\n"
             "cat\t: read cpio file content\n"
+            "exec\t: read cpio file content\n"
             "reboot\t: reboot rpi\n"
             "clear\t: clear screen\n");
-    } else if (!strncmp(cmd, "hello", 5)) {
+    } else if (!strcmp(cmd, "hello")) {
         uart_puts("Hello World!\n");
-    } else if (!strncmp(cmd, "ls", 2)) {
+    } else if (!strcmp(cmd, "ls")) {
         cpio_ls();
-    } else if (!strncmp(cmd, "cat", 3)) {
+    } else if (!strcmp(cmd, "exec")) {
         // clear cmd
         memset(cmd, 0, CMD_MAX_LEN);
-        uart_puts(CMD_PREFIX);
         // again, read file name
-        size_t len = get_command();
-        cpio_get_file(cmd, &len);
-    } else if (!strncmp(cmd, "sysinfo", 7)) {
+        size_t len = get_line("File name: ");
+        int ret_code = cpio_traverse(cmd, &len, cpio_exec);
+        // int ret_code = exec("exception_test.img", strlen("exception_test.img"));
+        if (ret_code == -1) {
+            uart_puts("Error: file not exist\n");
+        }
+    } else if (!strcmp(cmd, "cat")) {
+        // clear cmd
+        memset(cmd, 0, CMD_MAX_LEN);
+        // again, read file name
+        size_t len = get_line("File name: ");
+        int ret_code = cpio_traverse(cmd, &len, cpio_catfile);
+        if (ret_code == -1) {
+            uart_puts("Error: file not exist\n");
+        }
+    } else if (!strcmp(cmd, "sysinfo")) {
         print_sysinfo();
-    } else if (!strncmp(cmd, "reboot", 6)) {
+    } else if (!strcmp(cmd, "reboot")) {
         reboot(1);
-    } else if (!strncmp(cmd, "clear", 5)) {
+    } else if (!strcmp(cmd, "clear")) {
         uart_puts(ESCAPE_STR "2J\x1b[H");
     } else {
         uart_printf("%s: command not found\n", cmd);
     }
 }
 
-void flush_line(size_t cursor) {
+void flush_line(char *line_prefix, int prefix_len, size_t cursor) {
     // clear line & restore command
-    uart_printf("%s%s", ESCAPE_STR "2K\r" CMD_PREFIX, cmd);
+    uart_printf("%s%s%s", ESCAPE_STR "2K\r", line_prefix, cmd);
     // set cursor position with CMD_PREFIX offset
-    uart_printf("%s%dG", ESCAPE_STR, cursor + CMD_PREFIX_LEN + CURSOR_OFFSET);
+    uart_printf("%s%dG", ESCAPE_STR, cursor + prefix_len + CURSOR_OFFSET);
 }
 
 // show board info
@@ -169,14 +185,13 @@ void print_sysinfo() {
 void shell() {
     // clear screen
     uart_puts(ESCAPE_STR "2J\x1b[H");
-    char* welcome_msg = malloc_size(23);
+    char *welcome_msg = malloc_size(23);
     strncpy(welcome_msg, "Welcome to ssrtw shell", 23);
     // send welcome message
     uart_printf("%s\nMessage heap address: %x\n", welcome_msg, welcome_msg);
     print_sysinfo();
     while (1) {
-        uart_puts(CMD_PREFIX);
-        get_command();
+        get_line(CMD_PREFIX);
         parse_command();
         memset(cmd, 0, CMD_MAX_LEN);
     }

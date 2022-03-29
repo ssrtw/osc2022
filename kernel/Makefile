@@ -2,7 +2,8 @@ include ../var.mak
 
 SRC = kernel
 IMAGE_NAME = kernel8
-QEMU_SERIAL = -serial null -serial pty #stdio
+
+QEMU_BINDDTB = -initrd ../initramfs.cpio -dtb ../bcm2710-rpi-3-b-plus.dtb
 
 SRCC = $(wildcard $(SRC_DIR)/*.c)
 SRCS = $(wildcard $(SRC_DIR)/*.s)
@@ -31,16 +32,16 @@ $(SRC_DIR)/$(IMAGE_NAME).img: $(OBJS)
 	$(OC) -O binary $(SRC_DIR)/$(IMAGE_NAME).elf $(SRC_DIR)/$(IMAGE_NAME).img
 
 run:
-	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial null -serial stdio -initrd ../initramfs.cpio -dtb ../bcm2710-rpi-3-b-plus.dtb
+	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial stdio $(QEMU_BINDDTB)
 
 runtty:
-	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial null -serial pty
+	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial pty $(QEMU_BINDDTB)
 
 debug:
-	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -S -s -serial stdio
+	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -S -s -serial stdio $(QEMU_BINDDTB)
 
 debugtty:
-	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -S -s -serial pty
+	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -S -s -serial pty $(QEMU_BINDDTB)
 
 clean:
 	rm $(SRC_DIR)/$(IMAGE_NAME).elf $(SRC_DIR)/$(IMAGE_NAME).img \
