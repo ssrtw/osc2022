@@ -1,10 +1,18 @@
 #include "uart.h"
 
 #include "compiler.h"
+#include "except.h"
 #include "stdarg.h"
 
-#define INT_STR_LEN  10
-#define UINT_HEX_LEN 8
+#define INT_STR_LEN      10
+#define UINT_HEX_LEN     8
+#define UART_BUFFER_SIZE 0x100
+
+// 四個cursor，用於ring的判定
+uint32_t sended_cursor = 0, send_insert_cursor = 0, unread_cursor = 0, read_push_cursor = 0;
+// 兩個ring
+byte send_buffer[UART_BUFFER_SIZE] = {0};
+byte read_buffer[UART_BUFFER_SIZE] = {0};
 
 void uart_init() {
     register uint32_t r;
@@ -128,4 +136,110 @@ void uart_printf(char* format, ...) {
         }
     }
     va_end(l);
+}
+
+void uart_async_puts(char* str) {
+    while (*str) {
+        if (unlikely(*str == '\n')) {
+            uart_async_send('\r');
+        }
+        uart_async_send(*str++);
+    }
+}
+
+void uart_async_send(uint32_t data) {
+    // 把data送到buffer array
+    while ((send_insert_cursor + 1) % UART_BUFFER_SIZE == sended_cursor) {
+        // 滿了應該要先繼續送資料
+        enable_uart_w_interrupt();
+    }
+    // critical section start
+    disable_el1_interrupt();
+    send_buffer[send_insert_cursor++] = data;
+    if (send_insert_cursor >= UART_BUFFER_SIZE)
+        send_insert_cursor = 0;  // ring
+    enable_el1_interrupt();
+    // critical section end
+
+    // 可以開始送資料
+    enable_uart_w_interrupt();
+}
+
+void uart_interrupt_w_handler() {
+    if (send_insert_cursor == sended_cursor) {
+        disable_uart_w_interrupt();
+        return;
+    }
+    *AUX_MU_IO=send_buffer[sended_cursor++];
+    if (sended_cursor >= UART_BUFFER_SIZE) {
+        sended_cursor = 0;
+    }
+    enable_uart_w_interrupt();
+}
+
+byte uart_async_getc() {
+    char c = uart_async_read();
+    return unlikely(c == '\r') ? '\n' : c;
+}
+
+byte uart_async_read() {
+    // 開始讀
+    enable_uart_r_interrupt();
+    while (read_push_cursor == unread_cursor)
+        enable_uart_r_interrupt();
+    // critical section start
+    disable_el1_interrupt();
+    byte data = read_buffer[unread_cursor++];
+    if (unread_cursor == UART_BUFFER_SIZE) {
+        unread_cursor = 0;
+    }
+    enable_el1_interrupt();
+    // critical section end
+    return data;
+}
+
+void uart_interrupt_r_handler() {
+    // buffer滿了，先不要讀
+    if ((read_push_cursor + 1) % UART_BUFFER_SIZE == unread_cursor) {
+        disable_uart_r_interrupt();
+        return;
+    }
+    read_buffer[read_push_cursor++] = (byte)*AUX_MU_IO;
+    if (read_push_cursor >= UART_BUFFER_SIZE) {
+        read_push_cursor = 0;
+    }
+    enable_uart_r_interrupt();
+}
+
+void enable_uart_interrupt() {
+    *IRQs1 |= 1 << 29;
+}
+
+void disable_uart_interrupt() {
+    disable_uart_r_interrupt();
+    disable_uart_w_interrupt();
+}
+
+void enable_uart_r_interrupt() {
+    *AUX_MU_IER |= 1;  // read interrupt
+}
+
+void enable_uart_w_interrupt() {
+    *AUX_MU_IER |= 2;  // write interrupt
+}
+
+void disable_uart_r_interrupt() {
+    *AUX_MU_IER &= ~(1);
+}
+
+void disable_uart_w_interrupt() {
+    *AUX_MU_IER &= ~(2);
+}
+
+int uart_r_interrupt_is_enable() {
+    return *AUX_MU_IER & 1;
+}
+
+int uart_w_interrupt_is_enable() {
+    return *AUX_MU_IER & 2;
 }

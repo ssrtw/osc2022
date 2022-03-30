@@ -62,7 +62,6 @@ exception_vector_table:
     ventry inv_error_el1h           // Error EL1h
 
     // Exception from a lower EL and at least one EL is AArch64
-    // 
     ventry sync_el0                 // Synchronous 64-bit EL0
     ventry irq_el0                  // IRQ 64-bit EL0
     ventry inv_fiq_el0_64           // FIQ 64-bit EL0
@@ -94,7 +93,10 @@ inv_error_el1t:
 inv_sync_el1h:
     inv_entry        4
 irq_el1h:
-    inv_entry        5 //irq_el1h_handler
+    save_all
+    bl irq_handler      // irq_handler(void)
+    load_all
+    eret
 inv_fiq_el1h:
     inv_entry        6
 inv_error_el1h:
@@ -102,12 +104,14 @@ inv_error_el1h:
 
 sync_el0:
     save_all
-    bl sync_el0_handler  // sync_el0(size_t x0)
+    bl sync_el0_handler // sync_el0_handler(size_t x0)
     load_all
     eret
-    // inv_entry        8
 irq_el0:
-    inv_entry        9 //irq_el0_handler
+    save_all
+    bl irq_handler      // irq_handler(void)
+    load_all
+    eret
 inv_fiq_el0_64:
     inv_entry       10
 inv_error_el0_64:

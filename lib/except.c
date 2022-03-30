@@ -1,6 +1,10 @@
 #include "except.h"
 
+#include "timer.h"
 #include "uart.h"
+
+void enable_el1_interrupt() { asm volatile("msr DAIFClr, 0xf"); }
+void disable_el1_interrupt() { asm volatile("msr DAIFSet, 0xf"); }
 
 void inv_handler(size_t x0) {
     size_t elr_el1;
@@ -24,4 +28,26 @@ void sync_el0_handler(size_t x0) {
         "mrs %2, esr_el1\n\t"
         : "=r"(spsr_el1), "=r"(elr_el1), "=r"(esr_el1)::"memory");
     uart_printf("from el0 -> el1, spsr_el1: %x, elr_el1: %x, esr_el1: %x\n", spsr_el1, elr_el1, esr_el1);
+}
+
+void irq_handler(void) {
+    // https://blog.csdn.net/Roland_Sun/article/details/105547271
+    size_t cntp_ctl_el0;
+    asm volatile("mrs %0, cntp_ctl_el0"
+                 : "=r"(cntp_ctl_el0));
+    // if is timer interrupt, do timer handler, bit 3(istatus)
+    if (cntp_ctl_el0 & 0b100) {
+        timer_handler();
+    }
+    if (*IRQ_PENDING_1 & IRQ_PENDING_1_AUX_INT && *CORE0_INTERRUPT_SOURCE & INTERRUPT_SOURCE_GPU) {
+        // IIR[2:1]==01, Transmit holding register empty
+        if (*AUX_MU_IIR & 0b010) {
+            uart_interrupt_w_handler();
+        }
+        // IIR[2:1]==10, Receiver holds valid byte
+        if (*AUX_MU_IIR & 0b100) {
+            // 如果收到資料，放到buff上
+            uart_interrupt_r_handler();
+        }
+    }
 }

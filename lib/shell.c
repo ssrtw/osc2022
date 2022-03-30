@@ -8,6 +8,7 @@
 #include "reboot.h"
 #include "stddef.h"
 #include "string.h"
+#include "timer.h"
 #include "uart.h"
 
 #define CMD_PREFIX     "> "
@@ -19,6 +20,7 @@ size_t get_line(char *line_prefix);
 void parse_command();
 void flush_line(char *line_prefix, int prefix_len, size_t cursor);
 void print_sysinfo();
+char prev_cmd[CMD_MAX_LEN];
 char cmd[CMD_MAX_LEN];
 
 size_t get_line(char *line_prefix) {
@@ -27,7 +29,7 @@ size_t get_line(char *line_prefix) {
     size_t idx = 0, len = 0;
     int prefix_len = strlen(line_prefix);
     while (1) {
-        c = uart_getc();
+        c = uart_async_getc();
         // https://www.microchip.com/forums/m979711.aspx
         // backspace
         if (unlikely(c == 0x08 || c == 0x7f)) {
@@ -37,8 +39,8 @@ size_t get_line(char *line_prefix) {
         }
         // escape
         else if (unlikely(c == 0x1b)) {
-            if (uart_getc() != '[') continue;
-            c = uart_getc();
+            if (uart_async_getc() != '[') continue;
+            c = uart_async_getc();
             switch (c) {
                 case 0x31:  // goto head
                     if (uart_read() == 0x7e)
@@ -47,7 +49,7 @@ size_t get_line(char *line_prefix) {
                 case 0x33:
                     // delete
                     // check if cursor at last position, don't react
-                    if (uart_getc() == '~' && idx != len) {
+                    if (uart_async_getc() == '~' && idx != len) {
                         strdel(cmd, idx);
                         --len;
                     }
@@ -56,8 +58,10 @@ size_t get_line(char *line_prefix) {
                     if (uart_read() == 0x7e)
                         idx = len;
                     break;
+                    // arrow top
                 case 0x41:
-                    // no implementation
+                    idx = len = strlen(prev_cmd);
+                    strncpy(cmd, prev_cmd, CMD_MAX_LEN);
                     break;
                 case 0x42:
                     // no implementation
@@ -121,19 +125,21 @@ void parse_command() {
         return;
     trim(cmd);
     if (!strcmp(cmd, "help")) {
-        uart_puts(
+        uart_async_puts(
             "help\t: print this help menu\n"
             "hello\t: print Hello World!\n"
             "sysinfo\t: show board info\n"
             "ls\t: list cpio root files\n"
             "cat\t: read cpio file content\n"
-            "exec\t: read cpio file content\n"
+            "exec\t: excute cpio file\n"
             "reboot\t: reboot rpi\n"
             "clear\t: clear screen\n");
     } else if (!strcmp(cmd, "hello")) {
         uart_puts("Hello World!\n");
     } else if (!strcmp(cmd, "ls")) {
         cpio_ls();
+    } else if (!strcmp(cmd, "time")) {
+        timer_enable();
     } else if (!strcmp(cmd, "exec")) {
         // clear cmd
         memset(cmd, 0, CMD_MAX_LEN);
@@ -162,6 +168,7 @@ void parse_command() {
     } else {
         uart_printf("%s: command not found\n", cmd);
     }
+    strncpy(prev_cmd, cmd, CMD_MAX_LEN);
 }
 
 void flush_line(char *line_prefix, int prefix_len, size_t cursor) {
@@ -184,11 +191,12 @@ void print_sysinfo() {
 
 void shell() {
     // clear screen
-    uart_puts(ESCAPE_STR "2J\x1b[H");
+    uart_async_puts(ESCAPE_STR "2J\x1b[H");
     char *welcome_msg = malloc_size(23);
     strncpy(welcome_msg, "Welcome to ssrtw shell", 23);
     // send welcome message
     uart_printf("%s\nMessage heap address: %x\n", welcome_msg, welcome_msg);
+    uart_async_puts("hello, async message\n");
     print_sysinfo();
     while (1) {
         get_line(CMD_PREFIX);
