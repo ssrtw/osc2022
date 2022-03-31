@@ -36,8 +36,10 @@ void irq_handler(void) {
     asm volatile("mrs %0, cntp_ctl_el0"
                  : "=r"(cntp_ctl_el0));
     // if is timer interrupt, do timer handler, bit 3(istatus)
-    if (cntp_ctl_el0 & 0b100) {
+    if (cntp_ctl_el0 & 0b100&& *CORE0_INTERRUPT_SOURCE & INTERRUPT_SOURCE_PNSIRQ) {
+        // timer_disable();
         timer_handler();
+        // timer_enable();
     }
     if (*IRQ_PENDING_1 & IRQ_PENDING_1_AUX_INT && *CORE0_INTERRUPT_SOURCE & INTERRUPT_SOURCE_GPU) {
         // IIR[2:1]==01, Transmit holding register empty

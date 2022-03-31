@@ -15,5 +15,6 @@ void trim(char* str);
 void memset(char* s, char value, size_t size);
 void strins(char* s, char c, size_t pos);
 void strdel(char* s, size_t pos);
+int atoi(char* str);
 
 #endif

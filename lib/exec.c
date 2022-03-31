@@ -7,9 +7,9 @@
 
 void __do_exec(void *text_addr, void *stack_addr);
 
-void cpio_exec(void *filename, void *user_task_addr){
+void cpio_exec(void *filename, void *user_task_addr) {
     void *stack_top = malloc_size(USER_STACK_SIZE);
-    __do_exec(user_task_addr, stack_top);
+    __do_exec(user_task_addr, stack_top + USER_STACK_SIZE);
 }
 
 void __do_exec(void *text_addr, void *stack_addr) {

@@ -4,12 +4,13 @@
 #include "gpio.h"
 #include "stddef.h"
 
-#define INT_REG_BASE           MMIO_BASE + 0x0000b000                             // 2835 page.112
-#define IRQ_PENDING_1          ((volatile uint32_t*)(INT_REG_BASE + 0x00000204))  // 2835 page.112
-#define IRQs1                  ((volatile uint32_t*)(INT_REG_BASE + 0x00000210))  // 2835 page.112
-#define IRQ_PENDING_1_AUX_INT  (1 << 29)                                          // 2835 page.113
-#define CORE0_INTERRUPT_SOURCE ((volatile uint32_t*)(0x40000060))                 // 2836 page. 16
-#define INTERRUPT_SOURCE_GPU   (1 << 8)                                           // 2836 page. 16
+#define INT_REG_BASE            MMIO_BASE + 0x0000b000                             // 2835 page.112
+#define IRQ_PENDING_1           ((volatile uint32_t*)(INT_REG_BASE + 0x00000204))  // 2835 page.112
+#define IRQs1                   ((volatile uint32_t*)(INT_REG_BASE + 0x00000210))  // 2835 page.112
+#define IRQ_PENDING_1_AUX_INT   (1 << 29)                                          // 2835 page.113
+#define CORE0_INTERRUPT_SOURCE  ((volatile uint32_t*)(0x40000060))                 // 2836 page. 16
+#define INTERRUPT_SOURCE_GPU    (1 << 8)                                           // 2836 page. 16
+#define INTERRUPT_SOURCE_PNSIRQ (1 << 1)                                           // 2836 page. 16
 
 // BCM2837 peripheral: https://cs140e.sergio.bz/docs/BCM2837-ARM-Peripherals.pdf#page=8
 // AUX UART

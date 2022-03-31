@@ -17,14 +17,14 @@ OBJS = $(SRCC:$(SRC_DIR)/%.c=$(BUILD_DIR)/$(SRC)_%_c.o) \
 all: $(SRC_DIR)/$(IMAGE_NAME).img 
 
 $(BUILD_DIR)/$(LIB)_%_s.o: $(LIB_DIR)/%.s
-	$(CC) $(CFLAGS) -I $(LIB_DIR) -c $< -o $@
+	$(CC) $(CFLAGS) -I $(LIB_INC) -c $< -o $@
 $(BUILD_DIR)/$(LIB)_%_c.o: $(LIB_DIR)/%.c
-	$(CC) $(CFLAGS) -I $(LIB_DIR) -c $< -o $@
+	$(CC) $(CFLAGS) -I $(LIB_INC) -c $< -o $@
 
 $(BUILD_DIR)/$(SRC)_%_s.o: $(SRC_DIR)/%.s
-	$(CC) $(CFLAGS) -I $(LIB_DIR) -c $< -o $@
+	$(CC) $(CFLAGS) -I $(LIB_INC) -c $< -o $@
 $(BUILD_DIR)/$(SRC)_%_c.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -I $(LIB_DIR) -c $< -o $@
+	$(CC) $(CFLAGS) -I $(LIB_INC) -c $< -o $@
 
 $(SRC_DIR)/$(IMAGE_NAME).img: $(OBJS)
 	$(LD) -nostdlib -nostartfiles $^ -T link.ld -o $(SRC_DIR)/$(IMAGE_NAME).elf

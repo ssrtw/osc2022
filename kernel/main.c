@@ -10,6 +10,8 @@ void main(void* __dtb) {
     uart_init();
     enable_el1_interrupt();
     enable_uart_interrupt();
+    init_task_list();
+    timer_enable();
     // init cpio addr
     fdt_traverse(fdt_callback_initramfs);
     shell();

@@ -124,6 +124,7 @@ void parse_command() {
     if (!strlen(cmd))
         return;
     trim(cmd);
+    strncpy(prev_cmd, cmd, CMD_MAX_LEN);
     if (!strcmp(cmd, "help")) {
         uart_async_puts(
             "help\t: print this help menu\n"
@@ -131,6 +132,7 @@ void parse_command() {
             "sysinfo\t: show board info\n"
             "ls\t: list cpio root files\n"
             "cat\t: read cpio file content\n"
+            "timer\t: set timer, timer <seconds> <message>\n"
             "exec\t: excute cpio file\n"
             "reboot\t: reboot rpi\n"
             "clear\t: clear screen\n");
@@ -138,8 +140,25 @@ void parse_command() {
         uart_puts("Hello World!\n");
     } else if (!strcmp(cmd, "ls")) {
         cpio_ls();
-    } else if (!strcmp(cmd, "time")) {
-        timer_enable();
+    } else if (!strncmp(cmd, "timer", 5)) {
+        char *secs = NULL, *msg = NULL;
+        for (char *c = cmd; *c != '\0'; c++) {
+            if (*c == ' ') {
+                if (secs == NULL)
+                    secs = c + 1;
+                else {
+                    *c = '\0';
+                    msg = c + 1;
+                    break;
+                }
+            }
+        }
+        if (msg != NULL) {
+            int s = atoi(secs);
+            add_timer_task(timer_alert_callback, s, msg);
+        } else {
+            uart_async_puts("Timer args error\n");
+        }
     } else if (!strcmp(cmd, "exec")) {
         // clear cmd
         memset(cmd, 0, CMD_MAX_LEN);
@@ -168,7 +187,6 @@ void parse_command() {
     } else {
         uart_printf("%s: command not found\n", cmd);
     }
-    strncpy(prev_cmd, cmd, CMD_MAX_LEN);
 }
 
 void flush_line(char *line_prefix, int prefix_len, size_t cursor) {

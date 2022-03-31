@@ -1,9 +1,21 @@
 {
     "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4 ,ColumnLimit: 0, AlignConsecutiveMacros: true}",
     "C_Cpp.default.includePath": [
-        "${workspaceFolder}/lib"
+        "${workspaceFolder}/lib/header"
     ],
     "files.associations": {
+        "*.php": "php",
+        "*.html": "html",
+        "*.h": "c",
+        "*.c": "c",
         "*.mak": "makefile",
+        "array": "c",
+        "istream": "c",
+        "ostream": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "initializer_list": "c",
+        "limits": "c"
     }
 }
