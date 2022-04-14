@@ -4,14 +4,16 @@
 #include "list.h"
 #include "stddef.h"
 
-#define MAXORDER      6
-#define FRAME_START   0x10000000
-#define FRAMES_COUNT  0x10000  // (0x2000_0000 ~ 0x1000_0000)/0x1000
+#define MAXORDER     6
+#define MAXBINORDER  4  // bin val, base byte size: 32(0x20)
+#define FRAME_START  0x10000000
+#define FRAMES_COUNT 0x10000  // (0x2000_0000 ~ 0x1000_0000)/0x1000
 
 typedef struct frame {
     list_head_t list_head;
     int val;  // val == order
     int used;
+    int bin_val;
     uint32_t idx;
 } frame_t;
 
@@ -20,8 +22,9 @@ frame_t* split_frame(frame_t* frame);
 int combine_page(frame_t* frame);
 
 void init_allocator();
+void* kmalloc(uint32_t size);
+void kfree(void* ptr);
 void* malloc_size(size_t size);
-void freepage(void* ptr);
 void allocate_test();
 
 #endif

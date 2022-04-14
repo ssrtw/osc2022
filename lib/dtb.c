@@ -56,3 +56,15 @@ void fdt_callback_initramfs(uint32_t token, char *name, void *value, uint32_t va
         cpio_ramfs = (void *)(size_t)big2little(*(uint32_t *)value);
     }
 }
+
+fdt_reserve_entry_t *get_dtb_reserve_mem() {
+    fdt_header *header = dtb_addr;
+
+    if (big2little(header->magic) != FDT_MAGIC) {
+        uart_puts("[Error] dtb header magic is error value!\n");
+        return;
+    }
+    // Devicetree Specification 5.3 Memory Reservation Block
+    fdt_reserve_entry_t *fdt_rsv_entry = (fdt_reserve_entry_t *)((void *)header + big2little(header->off_mem_rsvmap));
+    return fdt_rsv_entry;
+}

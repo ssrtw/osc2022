@@ -27,6 +27,11 @@ typedef struct {
     uint32_t size_dt_struct;
 } fdt_header;
 
+typedef struct fdt_reserve_entry {
+    uint64_t address;
+    uint64_t size;
+} fdt_reserve_entry_t;
+
 uint32_t big2little(uint32_t data);
 
 void fdt_traverse(fdt_callback func);
