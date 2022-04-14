@@ -140,6 +140,9 @@ void parse_command() {
         uart_puts("Hello World!\n");
     } else if (!strcmp(cmd, "ls")) {
         cpio_ls();
+    } else if (!strncmp(cmd, "preempt", 7)) {
+    } else if (!strncmp(cmd, "allocator", 9)) {
+        allocate_test();
     } else if (!strncmp(cmd, "timer", 5)) {
         char *secs = NULL, *msg = NULL;
         for (char *c = cmd; *c != '\0'; c++) {
@@ -208,8 +211,8 @@ void print_sysinfo() {
 }
 
 void shell() {
-    // clear screen
-    uart_async_puts(ESCAPE_STR "2J\x1b[H");
+    // // clear screen
+    // uart_async_puts(ESCAPE_STR "2J\x1b[H");
     char *welcome_msg = malloc_size(23);
     strncpy(welcome_msg, "Welcome to ssrtw shell", 23);
     // send welcome message

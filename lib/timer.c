@@ -7,7 +7,7 @@
 #include "uart.h"
 
 struct list_head *timer_task_head;
-void do_timer_task(struct timer_task *task);
+void do_timer_task(timer_task_t *task);
 
 void timer_enable() {
     asm volatile(
@@ -63,20 +63,20 @@ void timer_alert_callback(char *args) {
 
 void timer_handler() {
     if (list_empty(timer_task_head)) {
-        set_timer_interrupt_by_secs(50000);  // 設定大數值當作不執行timer interrupt
+        set_timer_interrupt_by_secs(500);  // 設定大數值當作不執行timer interrupt
         return;
     }
-    do_timer_task((struct timer_task *)timer_task_head->next);
+    do_timer_task((timer_task_t *)timer_task_head->next);
 }
 
-void do_timer_task(struct timer_task *task) {
+void do_timer_task(timer_task_t *task) {
     list_del_entry((struct list_head *)task);
     // exec callback function
     (task->func)(task->args);
     if (!list_empty(timer_task_head)) {
-        set_timer_interrupt_by_tick(((struct timer_task *)timer_task_head->next)->expire);
+        set_timer_interrupt_by_tick(((timer_task_t *)timer_task_head->next)->expire);
     } else {
-        set_timer_interrupt_by_secs(50000);  // 設定大數值當作不執行timer interrupt
+        set_timer_interrupt_by_secs(500);  // 設定大數值當作不執行timer interrupt
     }
 }
 
@@ -96,19 +96,20 @@ size_t get_expire_tick_from_secs(size_t seconds) {
 }
 
 void add_timer_task(timer_callback func, size_t seconds, char *args) {
-    struct timer_task *new_task = (struct timer_task *)malloc_size(sizeof(struct timer_task));
-    int args_len = strlen(args);
+    timer_task_t *new_task = (timer_task_t *)malloc_size(sizeof(timer_task_t));
+    int args_len = strlen(args) + 1;
     new_task->func = func;
     new_task->expire = get_expire_tick_from_secs(seconds);
     new_task->args = malloc_size(args_len);
+    new_task->args[args_len] = '\0';
     strncpy(new_task->args, args, args_len);
-    
+
     INIT_LIST_HEAD(&new_task->list_head);
 
     struct list_head *curr;
     list_for_each(curr, timer_task_head) {
         // 迴圈當下的task比新task到期時間大，插入到前面
-        if (((struct timer_task *)curr)->expire > new_task->expire) {
+        if (((timer_task_t *)curr)->expire > new_task->expire) {
             list_add(&new_task->list_head, curr->prev);
             break;
         }
@@ -118,5 +119,5 @@ void add_timer_task(timer_callback func, size_t seconds, char *args) {
         list_add_tail((struct list_head *)new_task, timer_task_head);
     }
 
-    set_timer_interrupt_by_tick(((struct timer_task *)(timer_task_head->next))->expire);
+    set_timer_interrupt_by_tick(((timer_task_t *)(timer_task_head->next))->expire);
 }

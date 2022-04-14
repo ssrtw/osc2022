@@ -1,9 +1,10 @@
 #ifndef _EXCEPT_H
 #define _EXCEPT_H
 
-#include "stddef.h"
 #include "gpio.h"
+#include "stddef.h"
 
+void init_irq_event();
 void enable_el1_interrupt();
 void disable_el1_interrupt();
 void inv_handler(size_t x0);

@@ -1,5 +1,6 @@
 #include "except.h"
 
+#include "event.h"
 #include "timer.h"
 #include "uart.h"
 
@@ -36,20 +37,26 @@ void irq_handler(void) {
     asm volatile("mrs %0, cntp_ctl_el0"
                  : "=r"(cntp_ctl_el0));
     // if is timer interrupt, do timer handler, bit 3(istatus)
-    if (cntp_ctl_el0 & 0b100&& *CORE0_INTERRUPT_SOURCE & INTERRUPT_SOURCE_PNSIRQ) {
-        // timer_disable();
-        timer_handler();
-        // timer_enable();
+    if (cntp_ctl_el0 & 0b100 && *CORE0_INTERRUPT_SOURCE & INTERRUPT_SOURCE_PNSIRQ) {
+        timer_disable();  // mask
+        add_irq_event(timer_handler, 0);
+        run_irq_event();
+        timer_enable();
     }
     if (*IRQ_PENDING_1 & IRQ_PENDING_1_AUX_INT && *CORE0_INTERRUPT_SOURCE & INTERRUPT_SOURCE_GPU) {
         // IIR[2:1]==01, Transmit holding register empty
         if (*AUX_MU_IIR & 0b010) {
-            uart_interrupt_w_handler();
+            disable_uart_w_interrupt();  // mask
+            add_irq_event(uart_interrupt_w_handler, 1);
+            run_irq_event();
         }
         // IIR[2:1]==10, Receiver holds valid byte
         if (*AUX_MU_IIR & 0b100) {
+            disable_uart_r_interrupt();  // mask
             // 如果收到資料，放到buff上
-            uart_interrupt_r_handler();
+            add_irq_event(uart_interrupt_r_handler, 1);
+            run_irq_event();
         }
     }
+    run_irq_event();
 }
