@@ -97,11 +97,11 @@ size_t get_expire_tick_from_secs(size_t seconds) {
 }
 
 void add_timer_task(timer_callback func, size_t seconds, char *args) {
-    timer_task_t *new_task = (timer_task_t *)simple_malloc(sizeof(timer_task_t));
+    struct timer_task *new_task = (struct timer_task *)kmalloc(sizeof(struct timer_task));
     int args_len = strlen(args) + 1;
     new_task->func = func;
     new_task->expire = get_expire_tick_from_secs(seconds);
-    new_task->args = simple_malloc(args_len);
+    new_task->args = kmalloc(args_len);
     new_task->args[args_len] = '\0';
     strncpy(new_task->args, args, args_len);
 
