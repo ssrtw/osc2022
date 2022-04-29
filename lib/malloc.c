@@ -1,12 +1,18 @@
 #include "malloc.h"
-#define KERNEL_TRACE
+// #define KERNEL_TRACE
 
+#include "cpio.h"
+#include "dtb.h"
 #include "except.h"
 #include "uart.h"
 #include "util.h"
 
-extern byte __heap_start;               // get linker verible
-static void* heap_top = &__heap_start;  // set to heap start address
+extern byte __kernel_start;                   // get linker verible
+extern byte __kernel_end;                     // get linker verible
+extern byte __heap_start;                     // get linker verible
+static void* heap_top = &__heap_start;        // set to heap start address
+static void* kernel_start = &__kernel_start;  // set to heap start address
+static void* kernel_end = &__kernel_end;      // set to heap start address
 static frame_t* frames;
 static list_head_t free_list[MAXORDER + 1];
 static list_head_t bin_list[MAXBINORDER + 1];
@@ -16,15 +22,16 @@ void free_page(void* ptr);
 void from_page_get_bins(uint32_t bin_val);
 void* alloc_bin(uint32_t size);
 void free_bin(void* ptr);
+void reserve_page(size_t start, size_t end);
 
-void* malloc_size(size_t size) {
+void* simple_malloc(size_t size) {
     void* curr = heap_top;
     heap_top = (void*)align_up((uint64_t)heap_top + size, 0x10);
     return curr;
 }
 
 void init_allocator() {
-    frames = malloc_size(FRAMES_COUNT * sizeof(frame_t));
+    frames = simple_malloc(FRAMES_COUNT * sizeof(frame_t));
     uart_printf("frames addr:%x\n", frames);
     // init freelist
     for (int i = 0; i <= MAXORDER; i++) {
@@ -42,7 +49,7 @@ void init_allocator() {
 
         // set orders
         // append max frame to freelist
-        if (i % (1 << MAXORDER)) {
+        if (i % (1 << MAXORDER) == 0) {
             frames[i].val = 6;
             frames[i].used = 0;
             list_add(&frames[i].list_head, &free_list[MAXORDER]);
@@ -51,6 +58,17 @@ void init_allocator() {
 #ifdef KERNEL_TRACE
     uart_printf("init_allocator. page count: %x, frame start: %x\n", FRAMES_COUNT, frames);
 #endif
+    // spin-table
+    reserve_page(0x0, 0x1000);
+    // kernel image size
+    reserve_page((size_t)kernel_start, (size_t)kernel_end);
+    // initramfs
+    reserve_page(cpio_ramfs, cpio_ramfs_end);
+    uart_printf("cpio addr.%x~%x\n",cpio_ramfs,cpio_ramfs_end);
+    // dtb reserve
+    dtb_reserve_mem(reserve_page);
+    // simple_malloc(all malloc frames)
+    reserve_page(&__heap_start, heap_top);
 }
 
 frame_t* get_buddy(frame_t* frame) {
@@ -149,7 +167,7 @@ void from_page_get_bins(uint32_t bin_val) {
     // 設置這個frame他當bin的大小
     frames[((size_t)page - FRAME_START) >> 12].bin_val = bin_val;
     for (int i = 0; i < 0x1000; i += binsize) {
-        list_head_t* bin = (list_head_t*)(page + i);
+        list_head_t* bin = (list_head_t*)((byte*)page + i);
         list_add(bin, &bin_list[bin_val]);
     }
 }
@@ -219,12 +237,52 @@ void kfree(void* ptr) {
     }
 }
 
+void reserve_page(size_t start, size_t end) {
+    lock();
+    // ------------------
+    // |   |s|      |e| |
+    // |s|            |e|
+    // ------------------
+    start &= ~0xfff;              // 4k align
+    end = align_up(end, 0x1000);  // 4k align
+    // check all list, if reserve page in list, delete them.
+    for (int val = MAXORDER; val >= 0; val--) {
+        list_head_t* curr;
+        list_for_each(curr, &free_list[val]) {
+            size_t page_start = (((frame_t*)curr)->idx << 12) + FRAME_START;
+            size_t nxt_page_start = page_start + (0x1000 << val);
+            if (start <= page_start && end >= nxt_page_start) {
+                ((frame_t*)curr)->used = 1;
+                list_del_entry(curr);
+#ifdef KERNEL_TRACE
+                uart_printf("reserve addr: %x\n", page_start);
+#endif
+            } else if (start >= nxt_page_start || end <= page_start) {
+                continue;
+            } else {
+#ifdef KERNEL_TRACE
+                uart_printf("reserve range: %x~%x, order=%d\n", page_start, nxt_page_start, ((frame_t*)curr)->val);
+#endif
+                // next foreach use
+                list_del_entry(curr);
+                list_head_t* prev = curr->prev;
+                // split page, next forloop process two page
+                curr = split_frame((frame_t*)curr);
+                list_add(&((frame_t*)curr)->list_head, &free_list[val - 1]);
+                curr = prev;
+            }
+        }
+    }
+    unlock();
+}
+
 void allocate_test() {
-    byte* p1 = kmalloc(0x1000);  // 1=0001, order=0
-    byte* p5 = kmalloc(0x1001);  // 1=0001, but > 4k, order=1
-    byte* p2 = kmalloc(0x4000);  // 4=0100, order=2
-    byte* p3 = kmalloc(0x8000);  // 8=1000, order=3
-    byte* p4 = kmalloc(0x3000);  // 3=0011, order=2
+    uart_printf("%x", 0x4200 & (~0xfff));  // 4k align
+    byte* p1 = kmalloc(0x1000);            // 1=0001, order=0
+    byte* p5 = kmalloc(0x1001);            // 1=0001, but > 4k, order=1
+    byte* p2 = kmalloc(0x4000);            // 4=0100, order=2
+    byte* p3 = kmalloc(0x8000);            // 8=1000, order=3
+    byte* p4 = kmalloc(0x3000);            // 3=0011, order=2
     kfree(p1);
     kfree(p5);
     kfree(p2);

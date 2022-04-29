@@ -38,4 +38,6 @@ void fdt_traverse(fdt_callback func);
 
 void fdt_callback_initramfs(uint32_t token, char* name, void* value, uint32_t value_len);
 
+void dtb_reserve_mem(void (*reserve_page_ptr)(size_t, size_t));
+
 #endif

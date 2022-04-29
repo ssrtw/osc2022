@@ -7,6 +7,20 @@
 void enable_el1_interrupt() { asm volatile("msr DAIFClr, 0xf"); }
 void disable_el1_interrupt() { asm volatile("msr DAIFSet, 0xf"); }
 
+static size_t lock_counter = 0;
+
+void lock() {
+    lock_counter += 1;
+    disable_el1_interrupt();
+}
+
+void unlock() {
+    lock_counter -= 1;
+    if (lock_counter == 0) {
+        enable_el1_interrupt();
+    }
+}
+
 void inv_handler(size_t x0) {
     size_t elr_el1;
     asm volatile(

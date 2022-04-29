@@ -71,6 +71,7 @@ void timer_handler() {
 
 void do_timer_task(timer_task_t *task) {
     list_del_entry((struct list_head *)task);
+    // kfree(task);
     // exec callback function
     (task->func)(task->args);
     if (!list_empty(timer_task_head)) {
@@ -81,7 +82,7 @@ void do_timer_task(timer_task_t *task) {
 }
 
 void init_task_list() {
-    timer_task_head = malloc_size(sizeof(struct list_head));
+    timer_task_head = simple_malloc(sizeof(struct list_head));
     INIT_LIST_HEAD(timer_task_head);
 }
 
@@ -96,11 +97,11 @@ size_t get_expire_tick_from_secs(size_t seconds) {
 }
 
 void add_timer_task(timer_callback func, size_t seconds, char *args) {
-    timer_task_t *new_task = (timer_task_t *)malloc_size(sizeof(timer_task_t));
+    timer_task_t *new_task = (timer_task_t *)simple_malloc(sizeof(timer_task_t));
     int args_len = strlen(args) + 1;
     new_task->func = func;
     new_task->expire = get_expire_tick_from_secs(seconds);
-    new_task->args = malloc_size(args_len);
+    new_task->args = simple_malloc(args_len);
     new_task->args[args_len] = '\0';
     strncpy(new_task->args, args, args_len);
 

@@ -5,7 +5,7 @@
 #include "uart.h"
 #include "util.h"
 
-#define initram_name "linux,initrd-start"
+#define initram_name "linux,initrd-"
 
 uint32_t big2little(uint32_t data) {
     return ((data >> 24) & 0xff) |
@@ -52,12 +52,15 @@ void fdt_traverse(fdt_callback callback) {
 
 void fdt_callback_initramfs(uint32_t token, char *name, void *value, uint32_t value_len) {
     if (token != FDT_PROP) return;
-    if (!strncmp(name, initram_name, sizeof(initram_name))) {
+    if (!strncmp(name, initram_name "start", sizeof(initram_name "start"))) {
         cpio_ramfs = (void *)(size_t)big2little(*(uint32_t *)value);
+    }
+    if (!strncmp(name, initram_name "end", sizeof(initram_name "end"))) {
+        cpio_ramfs_end = (void *)(size_t)big2little(*(uint32_t *)value);
     }
 }
 
-fdt_reserve_entry_t *get_dtb_reserve_mem() {
+void dtb_reserve_mem(void (*reserve_page_ptr)(size_t, size_t)) {
     fdt_header *header = dtb_addr;
 
     if (big2little(header->magic) != FDT_MAGIC) {
@@ -65,6 +68,6 @@ fdt_reserve_entry_t *get_dtb_reserve_mem() {
         return;
     }
     // Devicetree Specification 5.3 Memory Reservation Block
-    fdt_reserve_entry_t *fdt_rsv_entry = (fdt_reserve_entry_t *)((void *)header + big2little(header->off_mem_rsvmap));
-    return fdt_rsv_entry;
+    fdt_reserve_entry_t *fdt_rsv_entry = (fdt_reserve_entry_t *)((byte *)header + big2little(header->off_mem_rsvmap));
+    uart_printf("start %x, end %x\n",fdt_rsv_entry->address, fdt_rsv_entry->address + fdt_rsv_entry->size);
 }

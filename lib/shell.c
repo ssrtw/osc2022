@@ -213,10 +213,7 @@ void print_sysinfo() {
 void shell() {
     // // clear screen
     // uart_async_puts(ESCAPE_STR "2J\x1b[H");
-    char *welcome_msg = malloc_size(23);
-    strncpy(welcome_msg, "Welcome to ssrtw shell", 23);
-    // send welcome message
-    uart_printf("%s\nMessage heap address: %x\n", welcome_msg, welcome_msg);
+    uart_printf("Welcome to ssrtw shell\n");
     uart_async_puts("hello, async message\n");
     print_sysinfo();
     while (1) {

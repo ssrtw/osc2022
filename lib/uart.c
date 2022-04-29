@@ -148,17 +148,18 @@ void uart_async_puts(char* str) {
 }
 
 void uart_async_send(uint32_t data) {
+    disable_uart_w_interrupt();
     // 把data送到buffer array
     while ((send_insert_cursor + 1) % UART_BUFFER_SIZE == sended_cursor) {
         // 滿了應該要先繼續送資料
         enable_uart_w_interrupt();
     }
     // critical section start
-    disable_el1_interrupt();
+    lock();
     send_buffer[send_insert_cursor++] = data;
     if (send_insert_cursor >= UART_BUFFER_SIZE)
         send_insert_cursor = 0;  // ring
-    enable_el1_interrupt();
+    unlock();
     // critical section end
 
     // 可以開始送資料
@@ -188,12 +189,12 @@ byte uart_async_read() {
     while (read_push_cursor == unread_cursor)
         enable_uart_r_interrupt();
     // critical section start
-    disable_el1_interrupt();
+    lock();
     byte data = read_buffer[unread_cursor++];
     if (unread_cursor == UART_BUFFER_SIZE) {
         unread_cursor = 0;
     }
-    enable_el1_interrupt();
+    unlock();
     // critical section end
     return data;
 }

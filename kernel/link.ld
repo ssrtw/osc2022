@@ -1,5 +1,6 @@
 SECTIONS{
     . = 0x80000;
+    __kernel_start = .;
     .text : {
         KEEP(*(.text.boot))
         *(.text)
@@ -14,5 +15,6 @@ SECTIONS{
     __bss_end = .;
     . = ALIGN(4096); /* 4K align */
     __heap_start = .;
+    __kernel_end = .;
 }
 __bss_size = (__bss_end - __bss_start)>>3;

@@ -4,6 +4,8 @@
 #include "gpio.h"
 #include "stddef.h"
 
+void lock();
+void unlock();
 void init_irq_event();
 void enable_el1_interrupt();
 void disable_el1_interrupt();

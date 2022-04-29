@@ -10,6 +10,7 @@
 typedef void (*cpio_callback)(void *filename, void *data);
 
 void *cpio_ramfs;
+void *cpio_ramfs_end;
 
 struct cpio_header {
     char c_magic[6];    /* Magic header '070701'. */
