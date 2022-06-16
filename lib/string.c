@@ -1,6 +1,6 @@
 #include "string.h"
 
-#include "compiler.h"
+#include "util.h"
 
 // https://stackoverflow.com/a/34873763/13177700
 int strcmp(const char* s1, const char* s2) {
@@ -21,11 +21,17 @@ int strncmp(const char* s1, const char* s2, size_t len) {
     return 0;
 }
 
-int strncpy(char* dst, const char* src, size_t len) {
+void* strcpy(char* dst, const char* src) {
+    return memcpy(dst, src, strlen(src) + 1);
+}
+
+void* memcpy(void* dst, void* src, size_t len) {
+    char* d = dst;
+    const char* s = src;
     int i;
     for (i = 0; i < len; i++)
-        dst[i] = src[i];
-    return i;
+        *d++ = *s++;
+    return dst;
 }
 
 uint32_t strlen(const char* s) {

@@ -1,6 +1,7 @@
 // save general registers to stack
+.global save_all
 .macro save_all
-    sub sp, sp, 0x100
+    sub sp, sp, 0x120
     stp x0, x1, [sp ,16 * 0]
     stp x2, x3, [sp ,16 * 1]
     stp x4, x5, [sp ,16 * 2]
@@ -22,10 +23,14 @@
     str x0,  [sp, 0xf8]
     mrs x0,  elr_el1
     str x0,  [sp, 0x100]
-    ldp x0, x1, [sp ,16 * 0] // restore x0
+    mrs x0,  sp_el0
+    str x0,  [sp, 0x108]
+    // restore x0
+    ldp x0, x1, [sp ,16 * 0]
 .endm
 
 // load general registers from stack
+.global load_all
 .macro load_all
     ldp x0, x1, [sp ,16 * 0]
     ldp x2, x3, [sp ,16 * 1]
@@ -48,8 +53,11 @@
     msr spsr_el1,x0
     ldr x0,  [sp, 0x100]
     msr elr_el1, x0
-    ldp x0, x1, [sp ,16 * 0] // restore x0
-    add sp, sp, 0x100
+    ldr x0,  [sp, 0x108]
+    msr sp_el0, x0
+    // restore x0
+    ldp x0, x1, [sp ,16 * 0]
+    add sp, sp, 0x120
 .endm
 
 // https://kaiiiz.github.io/notes/nctu/osdi/lab3/exception-vector-table/
@@ -117,11 +125,13 @@ inv_error_el1h:
 
 sync_el0:
     save_all
-    bl sync_el0_handler // sync_el0_handler(size_t x0)
+    mov x0, sp  // trap_frame
+    bl sync_el0_handler // the syscall handler, sync_el0_handler(size_t x0)
     load_all
     eret
 irq_el0:
     save_all
+    mov x0, sp  // trap_frame
     bl irq_handler      // irq_handler(void)
     load_all
     eret

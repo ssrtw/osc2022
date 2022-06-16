@@ -1,8 +1,8 @@
 #include "mbox.h"
 
-#include "compiler.h"
 #include "gpio.h"
 #include "uart.h"
+#include "util.h"
 
 #define MBOX_BASE   MMIO_BASE + 0xb880
 #define MBOX_READ   ((volatile uint32_t *)(MBOX_BASE + 0x00000000))
@@ -28,8 +28,8 @@
 // need alignment
 volatile uint32_t mbox[64] __attribute__((aligned(16)));
 
-int mbox_call(byte ch) {
-    uint32_t r = (((uint32_t)((uint64_t)mbox) & ~0xF) | (ch & 0xF));
+int mbox_call(uint32_t ch, uint32_t *mb) {
+    uint32_t r = (((uint32_t)((uint64_t)mb) & ~0xF) | (ch & 0xF));
     /* wait until we can write to the mailbox */
     WAITING(*MBOX_STATUS & MBOX_FULL);
     /* write the address of our message to the mailbox with channel identifier */
@@ -58,7 +58,7 @@ void get_board_revision(uint32_t *res) {
     // tags end
     mbox[6] = END_TAG;
 
-    mbox_call(ARM2VC);
+    mbox_call(ARM2VC, mbox);
     // it should be 0xa020d3 for rpi3 b+
     *res = mbox[5];
 }
@@ -75,7 +75,7 @@ void get_arm_memory(uint32_t *addr, uint32_t *size) {
     // tags end
     mbox[7] = END_TAG;
 
-    mbox_call(ARM2VC);
+    mbox_call(ARM2VC, mbox);
     *addr = mbox[5];
     *size = mbox[6];
 }

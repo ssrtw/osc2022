@@ -14,8 +14,7 @@ _start:
     bl _from_el2_to_el1
 
     // stack pointer before MMIO address
-    ldr     x1, =_start  // move sp before MMIO address
-    mov     sp, x1  // move sp before MMIO address
+    mov     sp, 0x3c000000  // move sp before MMIO address
 
     // set el1 vector table
 set_exception_vector_table:

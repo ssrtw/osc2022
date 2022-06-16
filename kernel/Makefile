@@ -4,6 +4,7 @@ SRC = kernel
 IMAGE_NAME = kernel8
 
 QEMU_BINDDTB = -initrd ../initramfs.cpio -dtb ../bcm2710-rpi-3-b-plus.dtb
+TA_QEMU_BINDDTB = -initrd ../ta_initramfs.cpio -dtb ../bcm2710-rpi-3-b-plus.dtb
 
 SRCC = $(wildcard $(SRC_DIR)/*.c)
 SRCS = $(wildcard $(SRC_DIR)/*.s)
@@ -34,11 +35,17 @@ $(SRC_DIR)/$(IMAGE_NAME).img: $(OBJS)
 run:
 	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial stdio $(QEMU_BINDDTB)
 
+run_ta:
+	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial stdio $(TA_QEMU_BINDDTB)
+
 runtty:
 	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -serial pty $(QEMU_BINDDTB)
 
 debug:
 	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -S -s -serial stdio $(QEMU_BINDDTB)
+
+debug_ta:
+	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -S -s -serial stdio $(TA_QEMU_BINDDTB)
 
 debugtty:
 	$(QEMU) $(QEMUARGS) -kernel $(IMAGE_NAME).img -S -s -serial pty $(QEMU_BINDDTB)

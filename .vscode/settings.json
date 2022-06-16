@@ -9,13 +9,5 @@
         "*.h": "c",
         "*.c": "c",
         "*.mak": "makefile",
-        "array": "c",
-        "istream": "c",
-        "ostream": "c",
-        "tuple": "c",
-        "type_traits": "c",
-        "utility": "c",
-        "initializer_list": "c",
-        "limits": "c"
     }
 }

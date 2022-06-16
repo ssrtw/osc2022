@@ -22,8 +22,10 @@ void set_timer_interrupt_by_tick(size_t tick);
 void two_sec_callback(char *args);
 void timer_alert_callback(char *args);
 void timer_handler();
-void init_task_list();
+void init_timer_list();
 size_t get_expire_tick_from_secs(size_t seconds);
-void add_timer_task(timer_callback func, size_t seconds, char *args);
+#define TIMER_BY_SESC 0x0
+#define TIMER_BY_TICK 0x1
+void add_timer_task(int by_tick, size_t value, timer_callback func, char *args);
 
 #endif

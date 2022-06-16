@@ -30,8 +30,10 @@
 void uart_init();
 uint32_t uart_read();
 char uart_getc();
+void uart_getn(char* buf, size_t n);
 void uart_send(uint32_t data);
-void uart_puts(char* data);
+void uart_putn(const char * buf, size_t n);
+void uart_puts(const char * data);
 void uart_puti(int in);
 void uart_putx(uint32_t in);
 void uart_printf(char* format, ...);

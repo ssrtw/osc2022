@@ -1,10 +1,10 @@
 #include "timer.h"
 
 #include "malloc.h"
-#include "register.h"
 #include "stddef.h"
 #include "string.h"
 #include "uart.h"
+#include "util.h"
 
 struct list_head *timer_task_head;
 void do_timer_task(timer_task_t *task);
@@ -81,8 +81,15 @@ void do_timer_task(timer_task_t *task) {
     }
 }
 
-void init_task_list() {
-    timer_task_head = simple_malloc(sizeof(struct list_head));
+void init_timer_list() {
+    uint64_t tmp;
+    asm volatile("mrs %0, cntkctl_el1"
+                 : "=r"(tmp));
+    tmp |= 1;
+    asm volatile("msr cntkctl_el1, %0"
+                 :
+                 : "r"(tmp));
+    timer_task_head = kmalloc(sizeof(struct list_head));
     INIT_LIST_HEAD(timer_task_head);
 }
 
@@ -96,14 +103,22 @@ size_t get_expire_tick_from_secs(size_t seconds) {
     return nxt_tick;
 }
 
-void add_timer_task(timer_callback func, size_t seconds, char *args) {
+void add_timer_task(int by_tick, size_t value, timer_callback func, char *args) {
     struct timer_task *new_task = (struct timer_task *)kmalloc(sizeof(struct timer_task));
     int args_len = strlen(args) + 1;
     new_task->func = func;
-    new_task->expire = get_expire_tick_from_secs(seconds);
-    new_task->args = kmalloc(args_len);
-    new_task->args[args_len] = '\0';
-    strncpy(new_task->args, args, args_len);
+    if (by_tick == TIMER_BY_SESC) {
+        new_task->expire = get_expire_tick_from_secs(value);
+    } else {
+        // 傳0進去拿到當前tick
+        // value is ticks
+        new_task->expire = get_expire_tick_from_secs(0) + value;
+    }
+    if (args_len > 1) {
+        new_task->args = kmalloc(args_len);
+        new_task->args[args_len] = '\0';
+        memcpy(new_task->args, args, args_len);
+    }
 
     INIT_LIST_HEAD(&new_task->list_head);
 

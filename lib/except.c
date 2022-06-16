@@ -1,8 +1,11 @@
 #include "except.h"
 
 #include "event.h"
+#include "sched.h"
+#include "syscall.h"
 #include "timer.h"
 #include "uart.h"
+#include "util.h"
 
 void enable_el1_interrupt() { asm volatile("msr DAIFClr, 0xf"); }
 void disable_el1_interrupt() { asm volatile("msr DAIFSet, 0xf"); }
@@ -35,14 +38,8 @@ void inv_handler(size_t x0) {
 }
 
 // user proc system call
-void sync_el0_handler(size_t x0) {
-    size_t spsr_el1, elr_el1, esr_el1;
-    asm volatile(
-        "mrs %0, spsr_el1\n\t"
-        "mrs %1, elr_el1\n\t"
-        "mrs %2, esr_el1\n\t"
-        : "=r"(spsr_el1), "=r"(elr_el1), "=r"(esr_el1)::"memory");
-    uart_printf("from el0 -> el1, spsr_el1: %x, elr_el1: %x, esr_el1: %x\n", spsr_el1, elr_el1, esr_el1);
+void sync_el0_handler(trapframe_t* tf) {
+    syscall_handler(tf);
 }
 
 void irq_handler(void) {
@@ -56,6 +53,12 @@ void irq_handler(void) {
         add_irq_event(timer_handler, 0);
         run_irq_event();
         timer_enable();
+        // do schedule after add timer task
+        // if has more than one task, do schedule
+        if (rq->next->next != rq) {
+            schedule();
+            return;
+        }
     }
     if (*IRQ_PENDING_1 & IRQ_PENDING_1_AUX_INT && *CORE0_INTERRUPT_SOURCE & INTERRUPT_SOURCE_GPU) {
         // IIR[2:1]==01, Transmit holding register empty

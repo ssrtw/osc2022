@@ -8,12 +8,12 @@ struct list_head *irq_event_head;
 size_t curr_priority = 0x10000;  // priority
 
 void init_irq_event() {
-    irq_event_head = simple_malloc(sizeof(irq_event_t));
+    irq_event_head = kmalloc(sizeof(irq_event_t));
     INIT_LIST_HEAD(irq_event_head);
 }
 
 void add_irq_event(void *func, size_t priority) {
-    irq_event_t *new_event = (irq_event_t *)simple_malloc(sizeof(irq_event_t));
+    irq_event_t *new_event = (irq_event_t *)kmalloc(sizeof(irq_event_t));
     new_event->func = func;
     new_event->priority = priority;
     INIT_LIST_HEAD(&new_event->list_head);
@@ -50,8 +50,8 @@ void run_irq_event() {
         unlock();
         // critical section end
         nxt_event->func();
-        lock();
+        // lock();
         curr_priority = prev_priority;
-        unlock();
+        // unlock();
     }
 }

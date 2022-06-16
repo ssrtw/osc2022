@@ -9,9 +9,20 @@
 
 uint32_t big2little(uint32_t data) {
     return ((data >> 24) & 0xff) |
-           ((data << 8) & 0xff0000) |
            ((data >> 8) & 0xff00) |
+           ((data << 8) & 0xff0000) |
            ((data << 24) & 0xff000000);
+}
+
+uint64_t big2little64(uint64_t data) {
+    return ((data >> 56) & 0xff) |
+           ((data >> 40) & 0xff00) |
+           ((data >> 24) & 0xff0000) |
+           ((data >> 8) & 0xff000000) |
+           ((data << 8) & 0xff00000000) |
+           ((data << 24) & 0xff0000000000) |
+           ((data << 40) & 0xff000000000000) |
+           ((data << 56) & 0xff00000000000000);
 }
 
 void fdt_traverse(fdt_callback callback) {
@@ -69,5 +80,7 @@ void dtb_reserve_mem(void (*reserve_page_ptr)(size_t, size_t)) {
     }
     // Devicetree Specification 5.3 Memory Reservation Block
     fdt_reserve_entry_t *fdt_rsv_entry = (fdt_reserve_entry_t *)((byte *)header + big2little(header->off_mem_rsvmap));
-    uart_printf("start %x, end %x\n",fdt_rsv_entry->address, fdt_rsv_entry->address + fdt_rsv_entry->size);
+    uint64_t reserve_mem_start = big2little64(fdt_rsv_entry->address);
+    uint64_t reserve_mem_end = reserve_mem_start + big2little64(fdt_rsv_entry->size);
+    reserve_page_ptr(reserve_mem_start, reserve_mem_end);
 }

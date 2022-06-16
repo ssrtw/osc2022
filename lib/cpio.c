@@ -1,6 +1,9 @@
 #include "cpio.h"
 
+#include "malloc.h"
+#include "sched.h"
 #include "string.h"
+#include "uart.h"
 #include "util.h"
 
 /* Parse an ASCII hex string into an integer. */
@@ -51,7 +54,8 @@ int cpio_parse_header(void *now, const char **filename, uint64_t *_filesize, voi
     return 0;
 }
 
-int cpio_traverse(const char *name, uint64_t *size, cpio_callback func) {
+cpio_file_info *cpio_traverse(const char *name, cpio_callback func) {
+    uint64_t size;
     struct cpio_header *header = cpio_ramfs;
     uint32_t input_len, len;
     input_len = strlen(name);
@@ -60,23 +64,51 @@ int cpio_traverse(const char *name, uint64_t *size, cpio_callback func) {
         void *result;
         const char *current_filename;
 
-        int error = cpio_parse_header(header, &current_filename, size, &result, &next);
+        int error = cpio_parse_header(header, &current_filename, &size, &result, &next);
         if (error)
             return -1;
         len = strlen(current_filename);
         if (input_len == len && strncmp(current_filename, name, len) == 0) {
-            func(current_filename, result);
-            return 0;
+            if (func != NULL) {
+                func(result, size);
+                return NULL;
+            } else {
+                cpio_file_info *cfi = kmalloc(sizeof(cpio_file_info));
+                cfi->start = (uint64_t)result;
+                cfi->size = size;
+                return cfi;
+            }
         }
+        header = next;
+    }
+    return -1;
+}
+
+void cpio_catfile(void *data, size_t size) {
+    uart_putn(data, size);
+}
+
+void cpio_exec(void *data, size_t size) {
+    exec_thread((byte *)data, size);
+}
+
+void cpio_ls() {
+    const char *current_filename;
+    struct cpio_header *header, *next;
+    void *result;
+    int error;
+    uint64_t size;
+
+    header = cpio_ramfs;
+    while (1) {
+        error = cpio_parse_header(header, &current_filename, &size, &result, &next);
+        if (error) break;
+        uart_printf("%s\n", current_filename);
         header = next;
     }
 }
 
-void cpio_catfile(void *filename, void *data) {
-    uart_puts(data);
-}
-
-void cpio_ls() {
+void cpio_get_data() {
     const char *current_filename;
     struct cpio_header *header, *next;
     void *result;

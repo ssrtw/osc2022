@@ -64,8 +64,7 @@ void init_allocator() {
     reserve_page((size_t)kernel_start, (size_t)kernel_end);
     // initramfs
     reserve_page(cpio_ramfs, cpio_ramfs_end);
-    uart_printf("cpio addr.%x~%x\n",cpio_ramfs,cpio_ramfs_end);
-    // dtb reserve
+    // dtb reserve(spin table?)
     dtb_reserve_mem(reserve_page);
     // simple_malloc(all malloc frames)
     reserve_page(&__heap_start, heap_top);
@@ -188,9 +187,12 @@ void* alloc_bin(uint32_t size) {
         from_page_get_bins(bin_val);
     }
     list_head_t* bin = bin_list[bin_val].next;
+#ifdef KERNEL_TRACE
+    uart_printf("before alloc bin:%x, %x, %x\n", bin, bin->next, bin->prev);
+#endif
     list_del_entry(bin);
 #ifdef KERNEL_TRACE
-    uart_printf("alloc bin addr=%x, val=%d\n", bin, bin_val);
+    uart_printf("after alloc bin:%x, %x, %x\n", bin_list[bin_val].next, bin_list[bin_val].next->next, bin_list[bin_val].next->prev);
 #endif
     return (void*)bin;
 }
@@ -289,7 +291,12 @@ void allocate_test() {
     kfree(p3);
     kfree(p4);
     byte* bin1 = kmalloc(32);
+    bin1[0] = 'a';
+    bin1[1] = '\n';
+    bin1[2] = '\0';
     byte* bin2 = kmalloc(30);
+    uart_printf("%x, %x\n", bin1, bin2);
+    uart_printf("%s, %s\n", bin1, bin2);
     byte* bin3 = kmalloc(64);
     kfree(bin2);
     bin2 = kmalloc(69);

@@ -1,8 +1,8 @@
 #include "uart.h"
 
-#include "compiler.h"
 #include "except.h"
 #include "stdarg.h"
+#include "util.h"
 
 #define INT_STR_LEN      10
 #define UINT_HEX_LEN     8
@@ -58,13 +58,25 @@ char uart_getc() {
     return unlikely(c == '\r') ? '\n' : c;
 }
 
+void uart_getn(char* buf, size_t n) {
+    while (n--) {
+        *buf++ = uart_getc();
+    }
+}
+
 void uart_send(uint32_t data) {
     // Transmitter idle
     WAITING(!(*AUX_MU_LSR & 0x20));
     *AUX_MU_IO = data;
 }
 
-void uart_puts(char* data) {
+void uart_putn(const char* buf, size_t n) {
+    while (n--) {
+        uart_send(*buf++);
+    }
+}
+
+void uart_puts(const char* data) {
     while (*data) {
         if (unlikely(*data == '\n')) {
             uart_send('\r');
@@ -171,7 +183,7 @@ void uart_interrupt_w_handler() {
         disable_uart_w_interrupt();
         return;
     }
-    *AUX_MU_IO=send_buffer[sended_cursor++];
+    *AUX_MU_IO = send_buffer[sended_cursor++];
     if (sended_cursor >= UART_BUFFER_SIZE) {
         sended_cursor = 0;
     }
