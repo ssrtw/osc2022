@@ -2,6 +2,7 @@
 
 #include "event.h"
 #include "sched.h"
+#include "signal.h"
 #include "syscall.h"
 #include "timer.h"
 #include "uart.h"
@@ -42,7 +43,7 @@ void sync_el0_handler(trapframe_t* tf) {
     syscall_handler(tf);
 }
 
-void irq_handler(void) {
+void irq_handler(trapframe_t* tf) {
     // https://blog.csdn.net/Roland_Sun/article/details/105547271
     size_t cntp_ctl_el0;
     asm volatile("mrs %0, cntp_ctl_el0"
@@ -57,7 +58,6 @@ void irq_handler(void) {
         // if has more than one task, do schedule
         if (rq->next->next != rq) {
             schedule();
-            return;
         }
     }
     if (*IRQ_PENDING_1 & IRQ_PENDING_1_AUX_INT && *CORE0_INTERRUPT_SOURCE & INTERRUPT_SOURCE_GPU) {
@@ -75,5 +75,8 @@ void irq_handler(void) {
             run_irq_event();
         }
     }
-    run_irq_event();
+    // if user, https://developer.arm.com/documentation/ddi0595/2021-06/AArch64-Registers/SPSR-EL1--Saved-Program-Status-Register--EL1-
+    if ((tf->spsr_el1 & 0b1100) == 0) {
+        check_sig(tf);
+    }
 }

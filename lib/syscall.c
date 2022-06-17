@@ -4,6 +4,7 @@
 #include "malloc.h"
 #include "mbox.h"
 #include "sched.h"
+#include "signal.h"
 #include "stddef.h"
 #include "string.h"
 #include "uart.h"
@@ -17,7 +18,9 @@ void sys_exec(trapframe_t *tf, const char *name, char *const argv[]);
 void sys_fork(trapframe_t *tf);
 void sys_exit(trapframe_t *tf);
 void sys_mbox_call(trapframe_t *tf, byte ch, uint32_t *mb);
-void sys_kill(trapframe_t *tf, int pid);
+void sys_signal(trapframe_t *tf, uint32_t signum, sig_handler_t handler);
+void sys_kill(trapframe_t *tf, int pid, uint32_t signum);
+void sys_sigret(trapframe_t *tf);
 
 syscall_func syscall_table[] = {
     (syscall_func)sys_getpid,      // 0
@@ -27,7 +30,10 @@ syscall_func syscall_table[] = {
     (syscall_func)sys_fork,        // 4
     (syscall_func)sys_exit,        // 5
     (syscall_func)sys_mbox_call,   // 6
-    (syscall_func)sys_kill,        // 7
+    (syscall_func)sys_kill_pid,    // 7
+    (syscall_func)sys_signal,      // 8
+    (syscall_func)sys_kill,        // 9
+    (syscall_func)sys_sigret,      // 10
 };
 
 void syscall_handler(trapframe_t *tf) {
@@ -56,6 +62,12 @@ void sys_exec(trapframe_t *tf, const char *name, char *const argv[]) {
     cpio_file_info *cfi = cpio_traverse(name, NULL);
     if (cfi != NULL) {
         memcpy(curr_thread->data, cfi->start, cfi->size);
+        // reset signal
+        curr_thread->sigcheck = 0;
+        for (int i = 0; i < SIG_MAX; i++) {
+            curr_thread->sig_handler[i] = default_sig_handler;
+            curr_thread->sigcount[i] = 0;
+        }
         tf->elr_el1 = (uint64_t)curr_thread->data;
         tf->sp_el0 = (unsigned long)curr_thread->ustack_ptr + USTACK_SIZE;
         tf->x[0] = 0;
@@ -68,6 +80,11 @@ void sys_fork(trapframe_t *tf) {
     int parent_pid = curr_thread->pid;
     thread_t *parent_thread = curr_thread;
     thread_t *new_thread = thread_create(curr_thread->data);
+
+    // copy_signal
+    for (int i = 0; i < SIG_MAX; i++) {
+        new_thread->sig_handler[i] = curr_thread->sig_handler[i];
+    }
 
     memcpy((char *)new_thread->ustack_ptr, (char *)curr_thread->ustack_ptr, USTACK_SIZE);
     memcpy((char *)new_thread->kstack_ptr, (char *)curr_thread->kstack_ptr, KSTACK_SIZE);
@@ -104,7 +121,7 @@ void sys_mbox_call(trapframe_t *tf, byte ch, uint32_t *mb) {
     unlock();
 }
 
-void sys_kill(trapframe_t *tf, int pid) {
+void sys_kill_pid(trapframe_t *tf, int pid) {
     lock();
     if (pid >= PID_MAX || pid < 0 || threads[pid].state == THREAD_UNUSED) {
         unlock();
@@ -113,4 +130,24 @@ void sys_kill(trapframe_t *tf, int pid) {
     threads[pid].state = THREAD_ZOMBIE;
     unlock();
     schedule();
+}
+
+void sys_signal(trapframe_t *tf, uint32_t signum, sig_handler_t handler) {
+    if (signum >= SIG_MAX) return;
+    curr_thread->sig_handler[signum] = handler;
+}
+
+void sys_kill(trapframe_t *tf, int pid, uint32_t signum) {
+    if (pid >= PID_MAX || threads[pid].state == THREAD_UNUSED) {
+        return;
+    }
+    lock();
+    threads[pid].sigcount[signum]++;
+    unlock();
+}
+
+void sys_sigret(trapframe_t *tf) {
+    unsigned long sig_ustack = tf->sp_el0 % USTACK_SIZE == 0 ? tf->sp_el0 - USTACK_SIZE : tf->sp_el0 & (~(USTACK_SIZE - 1));
+    kfree((char *)sig_ustack);
+    load_cxt(&curr_thread->sig_save_cxt);
 }

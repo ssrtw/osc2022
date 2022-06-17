@@ -115,6 +115,7 @@ inv_sync_el1h:
     inv_entry        4
 irq_el1h:
     save_all
+    mov x0, sp  // trap_frame
     bl irq_handler      // irq_handler(void)
     load_all
     eret

@@ -18,8 +18,8 @@ void enable_el1_interrupt();
 void disable_el1_interrupt();
 void inv_handler(size_t x0);
 void irq_el1h_handler(size_t x0);
-void sync_el0_handler(trapframe_t *tp);
+void sync_el0_handler(trapframe_t* tp);
 void irq_el0_handler(size_t x0);
-void irq_handler(void);
+void irq_handler(trapframe_t* tf);
 
 #endif

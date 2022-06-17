@@ -173,21 +173,6 @@ void parse_command() {
         if (ret_val == -1) {
             uart_puts("Error: file not exist\n");
         }
-    // } else if (!strcmp(cmd, "test")) {
-    //     for (int i = 0; i < 5; i++) {
-    //         thread_create(test_loop);
-    //     }
-    //     thread_t *test_thread = thread_create(test_loop);
-    //     curr_thread = test_thread;
-    //     add_timer_task(TIMER_BY_SESC, 1, schedule_timer_task, "");
-    //     asm volatile(
-    //         "msr tpidr_el1, %0\n\t"  // thread info addr
-    //         "msr elr_el1, %1\n\t"    // ereturn addr, back to el0 start address
-    //         "msr spsr_el1, xzr\n\t"  // enable interrupt in EL0. You can do it by setting spsr_el1 to 0 before returning to EL0.
-    //         "msr sp_el0, %2\n\t"     // el0的stack(user stack)
-    //         "mov sp, %3\n\t"         // el1的stack(kernel stack)
-    //         "eret\n\t" ::"r"(&test_thread->cxt),
-    //         "r"(test_thread->cxt.lr), "r"(test_thread->cxt.sp), "r"(test_thread->kstack_ptr + KSTACK_SIZE));
     } else if (!strcmp(cmd, "cat")) {
         // clear cmd
         memset(cmd, 0, CMD_MAX_LEN);
@@ -227,10 +212,7 @@ void print_sysinfo() {
 }
 
 void shell() {
-    // // clear screen
-    // uart_async_puts(ESCAPE_STR "2J\x1b[H");
     uart_printf("Welcome to ssrtw shell\n");
-    uart_puts("hello, async message\n");
     print_sysinfo();
     while (1) {
         get_line(CMD_PREFIX);

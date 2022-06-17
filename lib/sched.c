@@ -22,20 +22,9 @@ void init_threads() {
 
 void idle() {
     for (;;) {
-        // uart_printf("i'm idle\n");
         kill_zombies();
         schedule();
     }
-}
-
-void test_loop() {
-    uart_printf("im=%x,prev=%x,next=%x\n", curr_thread, curr_thread->lh.prev, curr_thread->lh.next);
-    for (int i = 0; i < 10; i++) {
-        uart_printf("pid=%d,loop=%d\n", curr_thread->pid, i);
-        schedule();
-        // uart_printf("im here\n");
-    }
-    thread_exit();
 }
 
 void schedule() {
@@ -54,7 +43,7 @@ void kill_zombies() {
         if (curr->state == THREAD_ZOMBIE) {
             list_del_entry(&curr->lh);
             kfree(curr->ustack_ptr);
-            kfree(curr->ustack_ptr);
+            kfree(curr->kstack_ptr);
             curr->state = THREAD_UNUSED;
         }
     }
@@ -109,6 +98,12 @@ thread_t *thread_create(void *start) {
     use_thread->cxt.lr = (uint64_t)start;
     use_thread->cxt.sp = (uint64_t)use_thread->ustack_ptr + USTACK_SIZE;
     use_thread->cxt.fp = use_thread->cxt.sp;
+    // sig about
+    use_thread->sigcheck = 0;
+    for (int i = 0; i < SIG_MAX; i++) {
+        use_thread->sig_handler[i] = default_sig_handler;
+        use_thread->sigcount[i] = 0;
+    }
     list_add(&(use_thread->lh), rq);
     unlock();
     return use_thread;

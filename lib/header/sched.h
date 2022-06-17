@@ -2,10 +2,13 @@
 #define SCHED_H
 
 #include "list.h"
+#include "signal.h"
 #include "stddef.h"
+
 // https://stackoverflow.com/a/6294133
 // linux 32 bit 32768
 #define PID_MAX        32768
+#define SIG_MAX        32
 #define THREAD_RUNNING 0x0000
 #define THREAD_ZOMBIE  0x0001
 #define THREAD_UNUSED  0x0002
@@ -37,6 +40,11 @@ typedef struct thread {
     void *data;
     void *ustack_ptr;
     void *kstack_ptr;
+    sig_handler_t sig_handler[SIG_MAX];
+    int sigcount[SIG_MAX];
+    int sigcheck;
+    thread_context_t sig_save_cxt;
+    sig_handler_t curr_sig_handler;
 } thread_t;
 
 int curr_pid;
@@ -59,8 +67,5 @@ extern void store_cxt(void *curr_cxt);
 extern void load_cxt(void *curr_cxt);
 extern void *get_current();
 void schedule_timer_task(char *args);
-void test_loop();
-// extern void store_cxt(void *curr_cxt);
-// extern void load_cxt(void *curr_cxt);
 
 #endif
