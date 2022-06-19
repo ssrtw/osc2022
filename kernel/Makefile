@@ -7,26 +7,26 @@ QEMU_BINDDTB = -initrd ../initramfs.cpio -dtb ../bcm2710-rpi-3-b-plus.dtb
 TA_QEMU_BINDDTB = -initrd ../ta_initramfs.cpio -dtb ../bcm2710-rpi-3-b-plus.dtb
 
 SRCC = $(wildcard $(SRC_DIR)/*.c)
-SRCS = $(wildcard $(SRC_DIR)/*.s)
+SRCS = $(wildcard $(SRC_DIR)/*.S)
 LIBC = $(wildcard $(LIB_DIR)/*.c)
-LIBS = $(wildcard $(LIB_DIR)/*.s)
+LIBS = $(wildcard $(LIB_DIR)/*.S)
 
 OBJS = $(SRCC:$(SRC_DIR)/%.c=$(BUILD_DIR)/$(SRC)_%_c.o) \
-       $(SRCS:$(SRC_DIR)/%.s=$(BUILD_DIR)/$(SRC)_%_s.o) \
+       $(SRCS:$(SRC_DIR)/%.S=$(BUILD_DIR)/$(SRC)_%_S.o) \
        $(LIBC:$(LIB_DIR)/%.c=$(BUILD_DIR)/$(LIB)_%_c.o) \
-       $(LIBS:$(LIB_DIR)/%.s=$(BUILD_DIR)/$(LIB)_%_s.o)
+       $(LIBS:$(LIB_DIR)/%.S=$(BUILD_DIR)/$(LIB)_%_S.o)
 
 all: $(SRC_DIR)/$(IMAGE_NAME).img
 
-$(BUILD_DIR)/$(LIB)_%_s.o: $(LIB_DIR)/%.s
-	$(CC) $(CFLAGS) -I $(LIB_INC) -c $< -o $@
+$(BUILD_DIR)/$(LIB)_%_S.o: $(LIB_DIR)/%.S
+	$(CC) $(CFLAGS) -I $(INC_DIR) -c $< -o $@
 $(BUILD_DIR)/$(LIB)_%_c.o: $(LIB_DIR)/%.c
-	$(CC) $(CFLAGS) -I $(LIB_INC) -c $< -o $@
+	$(CC) $(CFLAGS) -I $(INC_DIR) -c $< -o $@
 
-$(BUILD_DIR)/$(SRC)_%_s.o: $(SRC_DIR)/%.s
-	$(CC) $(CFLAGS) -I $(LIB_INC) -c $< -o $@
+$(BUILD_DIR)/$(SRC)_%_S.o: $(SRC_DIR)/%.S
+	$(CC) $(CFLAGS) -I $(INC_DIR) -c $< -o $@
 $(BUILD_DIR)/$(SRC)_%_c.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -I $(LIB_INC) -c $< -o $@
+	$(CC) $(CFLAGS) -I $(INC_DIR) -c $< -o $@
 
 $(SRC_DIR)/$(IMAGE_NAME).img: $(OBJS)
 	$(LD) -nostdlib -nostartfiles $^ -T link.ld -o $(SRC_DIR)/$(IMAGE_NAME).elf

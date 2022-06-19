@@ -17,8 +17,8 @@ endif
 
 BUILD = build
 LIB = lib
+INC = include
 BUILD_DIR = ../$(BUILD)
 LIB_DIR = ../$(LIB)
 SRC_DIR = ../$(SRC)
-
-LIB_INC = $(LIB_DIR)/header
+INC_DIR = ../$(INC)
