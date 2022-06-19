@@ -9,7 +9,6 @@
 #include "string.h"
 #include "timer.h"
 #include "uart.h"
-#include "user.h"
 #include "util.h"
 
 #define CMD_PREFIX     "> "

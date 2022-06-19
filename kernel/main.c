@@ -3,11 +3,11 @@
 #include "event.h"
 #include "except.h"
 #include "malloc.h"
+#include "mmu.h"
 #include "sched.h"
 #include "shell.h"
 #include "timer.h"
 #include "uart.h"
-#include "util.h"
 
 void main(void* __dtb) {
     dtb_addr = __dtb;

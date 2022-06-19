@@ -1,9 +1,10 @@
 #ifndef _GPIO_H
 #define _GPIO_H
 
+#include "mmu.h"
 #include "stddef.h"
 
-#define MMIO_BASE 0x3f000000
+#define MMIO_BASE PHYS_TO_VIRT(0x3f000000)
 
 #define GPFSEL0   ((volatile uint32_t*)(MMIO_BASE + 0x00200000))
 #define GPFSEL1   ((volatile uint32_t*)(MMIO_BASE + 0x00200004))

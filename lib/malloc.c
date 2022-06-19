@@ -58,16 +58,20 @@ void init_allocator() {
 #ifdef KERNEL_TRACE
     uart_printf("init_allocator. page count: %x, frame start: %x\n", FRAMES_COUNT, frames);
 #endif
-    // spin-table
-    reserve_page(0x0, 0x1000);
+    // spin-table, dtb reserve(to virt in dtb.c)
+    dtb_reserve_mem(reserve_page);
+    // PGD: 0x1000~0x2000
+    // PUD: 0x2000~0x3000
+    // PMD: 0x3000~0x4000
+    reserve_page(PHYS_TO_VIRT(0x1000), PHYS_TO_VIRT(0x4000));
     // kernel image size
     reserve_page((size_t)kernel_start, (size_t)kernel_end);
-    // initramfs
+    // initramfs, dtb reserve(to virt in dtb.c)
     reserve_page(cpio_ramfs, cpio_ramfs_end);
-    // dtb reserve(spin table?)
-    dtb_reserve_mem(reserve_page);
     // simple_malloc(all malloc frames)
     reserve_page(&__heap_start, heap_top);
+    // reserve start kernel stack?
+    reserve_page(PHYS_TO_VIRT(0x2c000000), PHYS_TO_VIRT(0x3c000000));
 }
 
 frame_t* get_buddy(frame_t* frame) {

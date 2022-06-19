@@ -1,5 +1,6 @@
 SECTIONS{
-    . = 0x80000;
+    . = 0xffff000000000000;
+    . += 0x80000;
     __kernel_start = .;
     .text : {
         KEEP(*(.text.boot))

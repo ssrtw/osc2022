@@ -3,18 +3,27 @@
 .global _start
 
 _start:
+    // save dtb addr to callee save reg
+    mov     x19, x0
     // read cpu id, stop slave cores
     mrs     x1, mpidr_el1
     and     x1, x1,#3
     // cpu id>0, standby
     // cpu id==0, init
     cbnz    x1, _standby
-
+    
     //  set exception level
     bl _from_el2_to_el1
 
-    // stack pointer before MMIO address
-    mov     sp, 0x3c000000  // move sp before MMIO address
+    bl kernel_mmu_init
+
+    // move sp before MMIO address
+    // at 0xffff00003c000000
+    mov     x3, xzr
+    movk    x3, 0x3c00, lsl 16
+    movk    x3, 0xffff, lsl 48
+    mov     sp, x3
+
 
     // set el1 vector table
 set_exception_vector_table:
@@ -33,6 +42,8 @@ _bss_set_zero:
     cbnz    x4, _bss_set_zero
 
 _bl_main:
+    // restore dtb addr to x0
+    mov x0, x19
     // goto main function
     bl      main     // link because if occur exception, make cpu wfe(die).
 _standby:

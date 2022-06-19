@@ -1,6 +1,7 @@
 #include "dtb.h"
 
 #include "cpio.h"
+#include "mmu.h"
 #include "string.h"
 #include "uart.h"
 #include "util.h"
@@ -64,10 +65,10 @@ void fdt_traverse(fdt_callback callback) {
 void fdt_callback_initramfs(uint32_t token, char *name, void *value, uint32_t value_len) {
     if (token != FDT_PROP) return;
     if (!strncmp(name, initram_name "start", sizeof(initram_name "start"))) {
-        cpio_ramfs = (void *)(size_t)big2little(*(uint32_t *)value);
+        cpio_ramfs = (void *)PHYS_TO_VIRT((size_t)big2little(*(uint32_t *)value));
     }
     if (!strncmp(name, initram_name "end", sizeof(initram_name "end"))) {
-        cpio_ramfs_end = (void *)(size_t)big2little(*(uint32_t *)value);
+        cpio_ramfs_end = (void *)PHYS_TO_VIRT((size_t)big2little(*(uint32_t *)value));
     }
 }
 
@@ -80,7 +81,7 @@ void dtb_reserve_mem(void (*reserve_page_ptr)(size_t, size_t)) {
     }
     // Devicetree Specification 5.3 Memory Reservation Block
     fdt_reserve_entry_t *fdt_rsv_entry = (fdt_reserve_entry_t *)((byte *)header + big2little(header->off_mem_rsvmap));
-    uint64_t reserve_mem_start = big2little64(fdt_rsv_entry->address);
+    uint64_t reserve_mem_start = PHYS_TO_VIRT(big2little64(fdt_rsv_entry->address));
     uint64_t reserve_mem_end = reserve_mem_start + big2little64(fdt_rsv_entry->size);
     reserve_page_ptr(reserve_mem_start, reserve_mem_end);
 }

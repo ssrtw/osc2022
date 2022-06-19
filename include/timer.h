@@ -2,9 +2,10 @@
 #define _TIMER_H
 
 #include "list.h"
+#include "mmu.h"
 #include "stddef.h"
 // unsecure warudo no taimu address
-#define CORE0_TIMER_IRQ_CTRL 0x40000040
+#define CORE0_TIMER_IRQ_CTRL PHYS_TO_VIRT(0x40000040)
 
 typedef void (*timer_callback)(char *args);
 
