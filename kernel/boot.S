@@ -1,3 +1,4 @@
+#include "mmu.h"
 .section ".text.boot"
 
 .global _start
@@ -17,18 +18,35 @@ _start:
 
     bl kernel_mmu_init
 
+    ldr x4, =TCR_CONFIG_DEFAULT
+    msr tcr_el1, x4
+
+    ldr x4, =((MAIR_DEVICE_nGnRnE << (MAIR_IDX_DEVICE_nGnRnE * 8)) | (MAIR_NORMAL_NOCACHE << (MAIR_IDX_NORMAL_NOCACHE * 8)))
+    msr mair_el1, x4
+
+    ldr x4, =BOOT_PGD_ADDR // PGD's page frame at 0x1000
+    msr ttbr0_el1, x4 // load PGD to the bottom translation-based register.
+    msr ttbr1_el1, x4 // also load PGD to the upper translation based register.
+
+    mrs x4, sctlr_el1
+    orr x4, x4, 1
+    msr sctlr_el1, x4
+
+    // indirect branch to the upper virtual address
+    ldr x2, =set_exception_vector_table
+    br x2
+
+    // set el1 vector table
+set_exception_vector_table:
+    adr x1, exception_vector_table
+    msr vbar_el1, x1
+
     // move sp before MMIO address
     // at 0xffff00003c000000
     mov     x3, xzr
     movk    x3, 0x3c00, lsl 16
     movk    x3, 0xffff, lsl 48
     mov     sp, x3
-
-
-    // set el1 vector table
-set_exception_vector_table:
-    adr x1, exception_vector_table
-    msr vbar_el1, x1
 
 _bss_init:
     // set relocate bss area to zero

@@ -10,7 +10,7 @@
 #include "uart.h"
 
 void main(void* __dtb) {
-    dtb_addr = __dtb;
+    dtb_addr = PHYS_TO_VIRT(__dtb);
     uart_init();
     // init cpio addr
     fdt_traverse(fdt_callback_initramfs);

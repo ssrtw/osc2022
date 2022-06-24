@@ -8,7 +8,7 @@
 #define IRQ_PENDING_1           ((volatile uint32_t*)(INT_REG_BASE + 0x00000204))  // 2835 page.112
 #define IRQs1                   ((volatile uint32_t*)(INT_REG_BASE + 0x00000210))  // 2835 page.112
 #define IRQ_PENDING_1_AUX_INT   (1 << 29)                                          // 2835 page.113
-#define CORE0_INTERRUPT_SOURCE  PHYS_TO_VIRT((volatile uint32_t*)(0x40000060))     // 2836 page. 16
+#define CORE0_INTERRUPT_SOURCE  (volatile uint32_t*)(PHYS_TO_VIRT(0x40000060))     // 2836 page. 16
 #define INTERRUPT_SOURCE_GPU    (1 << 8)                                           // 2836 page. 16
 #define INTERRUPT_SOURCE_PNSIRQ (1 << 1)                                           // 2836 page. 16
 
@@ -36,6 +36,7 @@ void uart_putn(const char* buf, size_t n);
 void uart_puts(const char* data);
 void uart_puti(int in);
 void uart_putx(uint32_t in);
+void uart_putX(uint64_t in);
 void uart_printf(char* format, ...);
 void uart_async_puts(char* str);
 void uart_async_send(uint32_t data);

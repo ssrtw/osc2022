@@ -7,15 +7,15 @@
 #include "uart.h"
 #include "util.h"
 
-extern byte __kernel_start;                   // get linker verible
-extern byte __kernel_end;                     // get linker verible
-extern byte __heap_start;                     // get linker verible
-static void* heap_top = &__heap_start;        // set to heap start address
-static void* kernel_start = &__kernel_start;  // set to heap start address
-static void* kernel_end = &__kernel_end;      // set to heap start address
-static frame_t* frames;
-static list_head_t free_list[MAXORDER + 1];
-static list_head_t bin_list[MAXBINORDER + 1];
+extern byte __kernel_start;            // get linker verible
+extern byte __kernel_end;              // get linker verible
+extern byte __heap_start;              // get linker verible
+void* heap_top = &__heap_start;        // set to heap start address
+void* kernel_start = &__kernel_start;  // set to heap start address
+void* kernel_end = &__kernel_end;      // set to heap start address
+frame_t* frames;
+list_head_t free_list[MAXORDER + 1];
+list_head_t bin_list[MAXBINORDER + 1];
 
 void* alloc_page(uint32_t size);
 void free_page(void* ptr);

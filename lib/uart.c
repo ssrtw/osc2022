@@ -117,12 +117,32 @@ void uart_putx(uint32_t in) {
     }
 }
 
+void uart_putX(uint64_t in) {
+    char s[16] = {0};
+    uchar i = 16 - 1;
+    while (in) {
+        s[i--] = in % 16;
+        in /= 16;
+    }
+    i = 0;
+    uart_puts("0x");
+    while (i < 16) {
+        if (s[i] >= 10) {
+            uart_send(0x37 + s[i]);
+        } else {
+            uart_send(0x30 + s[i]);
+        }
+        ++i;
+    }
+}
+
 // https://stackoverflow.com/a/54352534/13177700
 void uart_printf(char* format, ...) {
     va_list l;
     va_start(l, format);
     char *ptr, *s;
     int i;
+    uint64_t lu;
     for (ptr = format; *ptr != '\0'; ptr++) {
         if (*ptr == '%') {
             ++ptr;
@@ -134,6 +154,10 @@ void uart_printf(char* format, ...) {
                 case 'x':
                     i = va_arg(l, int);
                     uart_putx((uint32_t)i);
+                    break;
+                case 'X':
+                    lu = va_arg(l, uint64_t);
+                    uart_putX(lu);
                     break;
                 case 's':
                     s = va_arg(l, char*);

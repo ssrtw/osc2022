@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 OS=$(shell lsb_release -si)
-ARMPREFIX = aarch64-elf
+ARMPREFIX = aarch64-linux-gnu
 LD = $(ARMPREFIX)-ld
 CC = $(ARMPREFIX)-gcc
 OC = $(ARMPREFIX)-objcopy
