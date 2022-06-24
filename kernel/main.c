@@ -21,6 +21,6 @@ void main(void* __dtb) {
     init_timer_list();
     init_irq_event();
     timer_enable();
-    // cpio_traverse("syscall.img", cpio_exec);
-    shell();
+    cpio_traverse("vm.img", cpio_exec);
+    // shell();
 }

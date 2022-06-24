@@ -13,9 +13,10 @@
 #define SYSNUM_kill_pid   7
 #define SYSNUM_signal     8
 #define SYSNUM_kill       9
-#define SYSNUM_sigret     10
+#define SYSNUM_mmap       10
+#define SYSNUM_sigret     11
 
 void syscall_handler(trapframe_t* tf);
 // signal need
-void sys_kill_pid(trapframe_t *tf, int pid);
+void sys_kill_pid(trapframe_t* tf, int pid);
 #endif

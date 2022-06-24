@@ -68,9 +68,11 @@ void trim(char* str) {
     str[i - begin] = '\0';  // Null terminate string.
 }
 
-void memset(char* s, char value, size_t size) {
-    while (size--)
-        *s++ = value;
+void memset(void* addr, byte value, size_t len) {
+    char* d = addr;
+    int i;
+    for (i = 0; i < len; i++)
+        *d++ = value;
 }
 
 void strins(char* s, char c, size_t pos) {

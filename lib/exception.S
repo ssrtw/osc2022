@@ -64,6 +64,10 @@
 .macro ventry label
     .align 7 // entry size is 0x80, .align will pad 0
     b \label
+    mrs x1, esr_el1     // check fault information
+    mrs x2, elr_el1     // check return address
+    mrs x3, spsr_el1    // check stack address
+    mrs x4, far_el1     // check fault address
 .endm
 
 .align 11 // vector table should be aligned to 0x800
@@ -127,6 +131,7 @@ inv_error_el1h:
 sync_el0:
     save_all
     mov x0, sp  // trap_frame
+    mrs x1, esr_el1 // check fault information
     bl sync_el0_handler // the syscall handler, sync_el0_handler(size_t x0)
     load_all
     eret

@@ -3,7 +3,9 @@
 
 #include "stddef.h"
 
-int mbox_call(uint32_t ch, uint32_t *mb);
+extern volatile uint32_t mbox[64];
+
+int mbox_call(uint32_t ch);
 void get_board_revision(uint32_t *res);
 void get_arm_memory(uint32_t *addr, uint32_t *size);
 
